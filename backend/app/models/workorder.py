@@ -35,3 +35,4 @@ class WorkOrder(Base):
     vehicle = relationship("Vehicle", back_populates="workorders")
     business = relationship("Business", back_populates="workorders")
     customer = relationship("User", back_populates="workorders")
+    review = relationship("Review", back_populates="workorder", uselist=False)

@@ -29,3 +29,4 @@ class User(Base):
     businesses = relationship("Business", back_populates="owner")
     vehicles = relationship("Vehicle", back_populates="owner")
     workorders = relationship("WorkOrder", back_populates="customer")
+    reviews = relationship("Review", back_populates="customer")
