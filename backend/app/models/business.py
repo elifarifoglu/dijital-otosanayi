@@ -20,3 +20,4 @@ class Business(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     owner = relationship("User", back_populates="businesses")
+    workorders = relationship("WorkOrder", back_populates="business")

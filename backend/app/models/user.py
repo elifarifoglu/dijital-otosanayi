@@ -27,3 +27,5 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     businesses = relationship("Business", back_populates="owner")
+    vehicles = relationship("Vehicle", back_populates="owner")
+    workorders = relationship("WorkOrder", back_populates="customer")

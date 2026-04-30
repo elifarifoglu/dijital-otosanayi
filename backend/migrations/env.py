@@ -12,6 +12,8 @@ from alembic import context
 from app.db import Base, engine
 import app.models.user
 import app.models.business
+import app.models.vehicle
+import app.models.workorder
 
 config = context.config
 if config.config_file_name is not None:
