@@ -6,7 +6,7 @@ from app.db import get_db
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserResponse, UserLogin, TokenResponse
 from app.auth import hash_password, authenticate_user, create_access_token
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_roles
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -110,3 +110,18 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
     - Token'daki sub (user_id) değerinden kullanıcı bulunur
     """
     return current_user
+
+
+@router.get("/admin-only")
+def admin_only(current_user: User = Depends(require_roles("admin"))):
+    return {"message": "Admin erişimi başarılı", "user": current_user.email}
+
+
+@router.get("/business-owner-only")
+def business_owner_only(current_user: User = Depends(require_roles("business_owner"))):
+    return {"message": "Business owner erişimi başarılı", "user": current_user.email}
+
+
+@router.get("/customer-only")
+def customer_only(current_user: User = Depends(require_roles("customer"))):
+    return {"message": "Customer erişimi başarılı", "user": current_user.email}

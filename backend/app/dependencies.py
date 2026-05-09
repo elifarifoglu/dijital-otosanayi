@@ -72,3 +72,17 @@ def get_current_user(
         )
     
     return user
+
+
+def require_roles(*allowed_roles: str):
+    """Re-usable role kontrol dependency'si."""
+    
+    def role_dependency(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role.value not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bu işlemi yapmak için yetkiniz yok"
+            )
+        return current_user
+
+    return role_dependency
