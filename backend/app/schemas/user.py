@@ -10,6 +10,18 @@ class UserCreate(BaseModel):
     role: str = "customer"
 
 
+class UserLogin(BaseModel):
+    """Kullanıcı giriş şeması."""
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    """JWT token response şeması."""
+    access_token: str
+    token_type: str = "bearer"
+
+
 class UserResponse(BaseModel):
     """Kullanıcı response şeması (password_hash içermez)."""
     id: int

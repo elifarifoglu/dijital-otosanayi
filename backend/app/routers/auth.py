@@ -4,8 +4,8 @@ from email_validator import validate_email, EmailNotValidError
 
 from app.db import get_db
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreate, UserResponse
-from app.auth import hash_password
+from app.schemas.user import UserCreate, UserResponse, UserLogin, TokenResponse
+from app.auth import hash_password, authenticate_user, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -60,3 +60,41 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     return new_user
+
+
+@router.post("/login", response_model=TokenResponse)
+def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    """
+    Kullanıcı girişi ve JWT token oluştur.
+    
+    - Email ve password ile doğrulama
+    - İnaktif kullanıcılar giriş yapamaz
+    """
+    
+    # Kullanıcıyı doğrula
+    user = authenticate_user(db, user_data.email, user_data.password)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email veya şifre yanlış",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Aktif kullanıcı kontrolü
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu kullanıcı hesabı devre dışı bırakılmıştır"
+        )
+    
+    # Token oluştur
+    token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "email": user.email,
+            "role": user.role.value
+        }
+    )
+    
+    return {"access_token": token, "token_type": "bearer"}
