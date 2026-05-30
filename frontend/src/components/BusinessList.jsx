@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
-function BusinessList() {
+function BusinessList({ onSelectBusiness }) {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,6 +70,7 @@ function BusinessList() {
             <p><strong>Telefon:</strong> {business.phone || 'Belirtilmemiş'}</p>
             <p><strong>Açıklama:</strong> {business.description || 'Belirtilmemiş'}</p>
             <p><strong>ID:</strong> {business.id}</p>
+            <button onClick={() => onSelectBusiness(business.id)}>Detayları Gör</button>
           </div>
         ))}
       </div>
