@@ -16,3 +16,8 @@ class BusinessResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BusinessDetailResponse(BusinessResponse):
+    average_rating: Optional[float] = None
+    review_count: int = 0

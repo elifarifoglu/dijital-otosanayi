@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -25,7 +26,7 @@ class ReviewResponse(BaseModel):
     customer_id: int
     business_id: int
     rating: int
-    comment: str
+    comment: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
