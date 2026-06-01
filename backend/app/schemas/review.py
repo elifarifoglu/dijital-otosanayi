@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class ReviewCreate(BaseModel):
+    workorder_id: int
+    rating: int = Field(..., ge=1, le=5)
+    comment: str
+
+    @field_validator("comment")
+    @classmethod
+    def validate_comment(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Yorum boş olamaz")
+        return cleaned
+
+
+class ReviewResponse(BaseModel):
+    id: int
+    workorder_id: int
+    customer_id: int
+    business_id: int
+    rating: int
+    comment: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
