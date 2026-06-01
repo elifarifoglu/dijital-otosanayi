@@ -6,3 +6,63 @@ body {
 div {
   padding: 24px;
 }
+
+.business-detail-page {
+  max-width: 760px;
+}
+
+.business-detail-card,
+.review-section {
+  background-color: #f9f9f9;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.review-item {
+  background-color: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.review-form {
+  display: grid;
+  gap: 10px;
+}
+
+.review-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.review-form input,
+.review-form select,
+.review-form textarea {
+  padding: 10px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.helper-text {
+  display: block;
+  color: #666;
+}
+
+.ui-error {
+  color: #b42318;
+  margin: 0;
+}
+
+.ui-success {
+  color: #067647;
+  margin: 0;
+}

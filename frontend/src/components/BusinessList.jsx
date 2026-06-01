@@ -69,7 +69,6 @@ function BusinessList({ onSelectBusiness }) {
             <p><strong>Adres:</strong> {business.address || 'Belirtilmemiş'}</p>
             <p><strong>Telefon:</strong> {business.phone || 'Belirtilmemiş'}</p>
             <p><strong>Açıklama:</strong> {business.description || 'Belirtilmemiş'}</p>
-            <p><strong>ID:</strong> {business.id}</p>
             <button onClick={() => onSelectBusiness(business.id)}>Detayları Gör</button>
           </div>
         ))}

@@ -10,7 +10,7 @@ from app.models.review import Review
 from app.models.user import User
 from app.models.workorder import WorkOrder
 from app.schemas.business import BusinessResponse, BusinessDetailResponse
-from app.schemas.review import ReviewCreate, ReviewResponse
+from app.schemas.review import ReviewCreate, ReviewResponse, ReviewableWorkOrderResponse
 
 router = APIRouter(prefix="/businesses", tags=["businesses"])
 
@@ -65,8 +65,55 @@ def list_business_reviews(business_id: int, db: Session = Depends(get_db)):
             detail="İşletme bulunamadı"
         )
 
-    reviews = db.query(Review).filter(Review.business_id == business_id).order_by(Review.created_at.desc()).all()
-    return reviews
+    reviews = db.query(Review, WorkOrder).join(WorkOrder, WorkOrder.id == Review.workorder_id).filter(
+        Review.business_id == business_id
+    ).order_by(Review.created_at.desc()).all()
+
+    return [
+        {
+            "id": review.id,
+            "workorder_id": review.workorder_id,
+            "customer_id": review.customer_id,
+            "business_id": review.business_id,
+            "rating": review.rating,
+            "comment": review.comment,
+            "created_at": review.created_at,
+            "updated_at": review.updated_at,
+            "service_type": workorder.service_type,
+            "workorder_description": workorder.description,
+        }
+        for review, workorder in reviews
+    ]
+
+
+@router.get("/{business_id}/my-reviewable-workorders", response_model=list[ReviewableWorkOrderResponse])
+def list_my_reviewable_workorders(
+    business_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("customer")),
+):
+    business = db.query(Business).filter(Business.id == business_id).first()
+    if not business:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="İşletme bulunamadı"
+        )
+
+    workorders = db.query(WorkOrder).outerjoin(Review, Review.workorder_id == WorkOrder.id).filter(
+        WorkOrder.business_id == business_id,
+        WorkOrder.customer_id == current_user.id,
+        Review.id.is_(None),
+    ).order_by(WorkOrder.created_at.desc()).all()
+
+    return [
+        {
+            "workorder_id": workorder.id,
+            "service_type": workorder.service_type,
+            "description": workorder.description,
+            "status": workorder.status.value if hasattr(workorder.status, "value") else str(workorder.status),
+        }
+        for workorder in workorders
+    ]
 
 
 @router.post("/{business_id}/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)

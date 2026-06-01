@@ -29,5 +29,14 @@ class ReviewResponse(BaseModel):
     comment: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    service_type: Optional[str] = None
+    workorder_description: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ReviewableWorkOrderResponse(BaseModel):
+    workorder_id: int
+    service_type: str
+    description: Optional[str] = None
+    status: str
