@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -7,7 +8,12 @@ from app.models.business import Business
 from app.models.user import User, UserRole
 from app.models.vehicle import Vehicle
 from app.models.workorder import WorkOrder, WorkOrderStatus
-from app.schemas.workorder import WorkOrderCreate, WorkOrderCreateResponse, WorkOrderStatusUpdate
+from app.schemas.workorder import (
+    WorkOrderAveragePriceResponse,
+    WorkOrderCreate,
+    WorkOrderCreateResponse,
+    WorkOrderStatusUpdate,
+)
 
 router = APIRouter(prefix="/work-orders", tags=["work-orders"])
 
@@ -25,6 +31,32 @@ def to_api_status(status_value: WorkOrderStatus | str) -> str:
     if value == WorkOrderStatus.ready_for_delivery.value:
         return "ready"
     return value
+
+
+@router.get("/average-price", response_model=WorkOrderAveragePriceResponse)
+def get_average_price_by_service_type(
+    service_type: str,
+    db: Session = Depends(get_db),
+):
+    normalized_input = service_type.strip().lower()
+    if not normalized_input:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="service_type bos veya sadece bosluk olamaz",
+        )
+
+    average_price, work_order_count = db.query(
+        func.avg(WorkOrder.estimated_price),
+        func.count(WorkOrder.id),
+    ).filter(
+        func.lower(func.trim(WorkOrder.service_type)) == normalized_input
+    ).one()
+
+    return {
+        "service_type": service_type.strip(),
+        "average_price": float(average_price) if average_price is not None else None,
+        "work_order_count": int(work_order_count),
+    }
 
 
 @router.post("", response_model=WorkOrderCreateResponse, status_code=status.HTTP_201_CREATED)

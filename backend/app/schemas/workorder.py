@@ -54,3 +54,9 @@ class MyWorkOrderResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorkOrderAveragePriceResponse(BaseModel):
+    service_type: str
+    average_price: Decimal | None
+    work_order_count: int
