@@ -38,3 +38,19 @@ class WorkOrderCreateResponse(BaseModel):
 
 class WorkOrderStatusUpdate(BaseModel):
     status: str
+
+
+class MyWorkOrderResponse(BaseModel):
+    id: int
+    business_id: int
+    business_name: str
+    vehicle_id: int
+    vehicle_plate: str
+    vehicle_model: str
+    service_type: str
+    price: Decimal
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

@@ -6,6 +6,7 @@ from app.config import CORS_ORIGINS
 from app.routers import auth
 from app.routers import business
 from app.routers import workorder
+from app.routers import customer
 
 app = FastAPI()
 
@@ -13,6 +14,7 @@ app = FastAPI()
 app.include_router(auth.router)
 app.include_router(business.router)
 app.include_router(workorder.router)
+app.include_router(customer.router)
 
 # CORS ayarları
 app.add_middleware(
