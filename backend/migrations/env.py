@@ -15,6 +15,8 @@ import app.models.business
 import app.models.vehicle
 import app.models.workorder
 import app.models.review
+import app.models.service
+import app.models.business_service
 
 config = context.config
 if config.config_file_name is not None:

@@ -22,3 +22,4 @@ class Business(Base):
     owner = relationship("User", back_populates="businesses")
     workorders = relationship("WorkOrder", back_populates="business")
     reviews = relationship("Review", back_populates="business")
+    service_offerings = relationship("BusinessService", back_populates="business")
