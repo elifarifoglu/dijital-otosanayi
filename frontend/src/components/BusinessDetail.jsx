@@ -15,6 +15,8 @@ function BusinessDetail({ businessId, onBack }) {
   const [reviewableLoading, setReviewableLoading] = useState(false);
   const [reviewableError, setReviewableError] = useState(null);
   const [tokenAvailable, setTokenAvailable] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+  const [authStatus, setAuthStatus] = useState('idle');
 
   const [selectedWorkorderId, setSelectedWorkorderId] = useState('');
   const [rating, setRating] = useState('5');
@@ -26,7 +28,82 @@ function BusinessDetail({ businessId, onBack }) {
   useEffect(() => {
     fetchBusinessDetail();
     fetchBusinessReviews();
-    fetchReviewableWorkorders();
+  }, [businessId]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+
+    if (!token) {
+      setTokenAvailable(false);
+      setCurrentUserRole(null);
+      setAuthStatus('no-token');
+      setReviewableWorkorders([]);
+      setSelectedWorkorderId('');
+      setReviewableError(null);
+      setReviewableLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const runAuthAndReviewableFlow = async () => {
+      try {
+        setTokenAvailable(true);
+        setAuthStatus('checking');
+        setCurrentUserRole(null);
+        setReviewableError(null);
+        setReviewableWorkorders([]);
+        setSelectedWorkorderId('');
+
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        const mePayload = await meResponse.json().catch(() => null);
+
+        if (meResponse.status === 401) {
+          setAuthStatus('unauthorized');
+          setTokenAvailable(false);
+          return;
+        }
+
+        if (meResponse.status === 403) {
+          setAuthStatus('unauthorized');
+          return;
+        }
+
+        if (!meResponse.ok) {
+          setAuthStatus('unauthorized');
+          return;
+        }
+
+        const role = (mePayload?.role || '').toString().trim().toLowerCase();
+        setCurrentUserRole(role || null);
+        setAuthStatus('authenticated');
+
+        if (role !== 'customer') {
+          return;
+        }
+
+        await fetchReviewableWorkorders(token, controller.signal);
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          return;
+        }
+
+        setAuthStatus('unauthorized');
+        setReviewableError('Kullanıcı bilgisi alınamadı. Lütfen tekrar giriş yapın.');
+      }
+    };
+
+    runAuthAndReviewableFlow();
+
+    return () => {
+      controller.abort();
+    };
   }, [businessId]);
 
   const fetchBusinessDetail = async () => {
@@ -93,20 +170,8 @@ function BusinessDetail({ businessId, onBack }) {
     }
   };
 
-  const fetchReviewableWorkorders = async () => {
-    const token = localStorage.getItem('access_token');
-
-    if (!token) {
-      setTokenAvailable(false);
-      setReviewableWorkorders([]);
-      setSelectedWorkorderId('');
-      setReviewableError(null);
-      setReviewableLoading(false);
-      return;
-    }
-
+  const fetchReviewableWorkorders = async (token, signal) => {
     try {
-      setTokenAvailable(true);
       setReviewableLoading(true);
       setReviewableError(null);
 
@@ -114,6 +179,7 @@ function BusinessDetail({ businessId, onBack }) {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        signal,
       });
 
       if (response.status === 404) {
@@ -142,6 +208,10 @@ function BusinessDetail({ businessId, onBack }) {
       setReviewableWorkorders(payload);
       setSelectedWorkorderId(payload.length > 0 ? String(payload[0].workorder_id) : '');
     } catch (err) {
+      if (err?.name === 'AbortError') {
+        return;
+      }
+
       if (err.message.includes('fetch')) {
         setReviewableError('Yorum yapılabilir hizmetler yüklenemedi. Backend bağlantısı kurulamadı.');
       } else {
@@ -214,7 +284,11 @@ function BusinessDetail({ businessId, onBack }) {
       setRating('5');
       setComment('');
 
-      await Promise.all([fetchBusinessReviews(), fetchBusinessDetail(), fetchReviewableWorkorders()]);
+      await Promise.all([
+        fetchBusinessReviews(),
+        fetchBusinessDetail(),
+        fetchReviewableWorkorders(token),
+      ]);
     } catch (err) {
       if (err.message.includes('fetch')) {
         setSubmitError('Yorum gönderilemedi. Backend bağlantısı kurulamadı.');
@@ -292,17 +366,31 @@ function BusinessDetail({ businessId, onBack }) {
 
       <div className="review-section">
         <h3>Yorum Bırak</h3>
-        {!tokenAvailable && (
-          <p>Yorum yazmak için customer token gerekli.</p>
+        {authStatus === 'checking' && <p>Kullanıcı bilgisi kontrol ediliyor...</p>}
+
+        {authStatus === 'no-token' && (
+          <p>Yorum bırakmak için müşteri hesabıyla giriş yapmalısınız.</p>
         )}
 
-        {tokenAvailable && reviewableLoading && <p>Yorum yapılabilir hizmetler yükleniyor...</p>}
-        {tokenAvailable && reviewableError && <p className="ui-error">{reviewableError}</p>}
-        {tokenAvailable && !reviewableLoading && !reviewableError && reviewableWorkorders.length === 0 && (
+        {authStatus === 'unauthorized' && (
+          <p>Oturumunuz geçersiz veya süresi dolmuş. Yorum bırakmak için tekrar giriş yapın.</p>
+        )}
+
+        {authStatus === 'authenticated' && currentUserRole && currentUserRole !== 'customer' && (
+          <p>Yorum bırakmak için müşteri hesabı gerekir.</p>
+        )}
+
+        {authStatus === 'authenticated' && currentUserRole === 'customer' && reviewableLoading && (
+          <p>Yorum yapılabilir hizmetler yükleniyor...</p>
+        )}
+        {authStatus === 'authenticated' && currentUserRole === 'customer' && reviewableError && (
+          <p className="ui-error">{reviewableError}</p>
+        )}
+        {authStatus === 'authenticated' && currentUserRole === 'customer' && !reviewableLoading && !reviewableError && reviewableWorkorders.length === 0 && (
           <p>Bu işletme için yorum yapılabilir hizmet kaydınız bulunmuyor.</p>
         )}
 
-        {tokenAvailable && !reviewableLoading && !reviewableError && reviewableWorkorders.length > 0 && (
+        {authStatus === 'authenticated' && currentUserRole === 'customer' && !reviewableLoading && !reviewableError && reviewableWorkorders.length > 0 && (
           <form onSubmit={handleSubmitReview} className="review-form">
             <label>
               Yorum yapılacak hizmet

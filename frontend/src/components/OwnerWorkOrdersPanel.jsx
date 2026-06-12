@@ -1,0 +1,833 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+
+const STATUS_OPTIONS = [
+  { value: 'received', label: 'Teslim Alındı' },
+  { value: 'inspection', label: 'İnceleme Aşamasında' },
+  { value: 'repair', label: 'Tamir Aşamasında' },
+  { value: 'ready', label: 'Teslime Hazır' },
+  { value: 'delivered', label: 'Teslim Edildi' },
+];
+
+const STATUS_LABELS = {
+  received: 'Teslim Alındı',
+  inspection: 'İnceleme Aşamasında',
+  repair: 'Tamir Aşamasında',
+  ready: 'Teslime Hazır',
+  delivered: 'Teslim Edildi',
+};
+
+const currencyFormatter = new Intl.NumberFormat('tr-TR', {
+  style: 'currency',
+  currency: 'TRY',
+});
+
+function normalizeText(value) {
+  if (value === null || value === undefined || value === '') {
+    return 'Belirtilmemiş';
+  }
+  return String(value);
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === '') {
+    return 'Belirtilmemiş';
+  }
+
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) {
+    return 'Belirtilmemiş';
+  }
+
+  return currencyFormatter.format(numericValue);
+}
+
+function formatDate(value) {
+  if (!value) {
+    return 'Belirtilmemiş';
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Belirtilmemiş';
+  }
+
+  return parsedDate.toLocaleString('tr-TR');
+}
+
+function getStatusLabel(statusValue) {
+  const normalized = (statusValue || '').toString().trim().toLowerCase();
+  if (!normalized) {
+    return 'Belirtilmemiş';
+  }
+  return STATUS_LABELS[normalized] || `Bilinmeyen durum (${normalized})`;
+}
+
+function getErrorMessage(responseStatus, payload, fallbackMessage) {
+  if (responseStatus === 401) {
+    return 'Oturumunuz geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.';
+  }
+
+  if (responseStatus === 403) {
+    return 'Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.';
+  }
+
+  if (payload && payload.detail) {
+    if (typeof payload.detail === 'string') {
+      return payload.detail;
+    }
+    return JSON.stringify(payload.detail);
+  }
+
+  return fallbackMessage;
+}
+
+function parseCustomerLabel(customer) {
+  const fullName = (customer?.full_name || '').trim();
+  const email = normalizeText(customer?.email);
+  if (fullName) {
+    return `${fullName} - ${email}`;
+  }
+  return email;
+}
+
+function parseVehicleLabel(vehicle) {
+  const plate = normalizeText(vehicle?.plate);
+  const make = normalizeText(vehicle?.make);
+  const model = normalizeText(vehicle?.model);
+  const year = normalizeText(vehicle?.year);
+  return `${plate} - ${make} ${model} (${year})`;
+}
+
+function OwnerWorkOrdersPanel({ onBack }) {
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [authErrorMessage, setAuthErrorMessage] = useState('');
+  const [tokenMissing, setTokenMissing] = useState(false);
+  const [isBusinessOwner, setIsBusinessOwner] = useState(true);
+
+  const [ownerBusinesses, setOwnerBusinesses] = useState([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState('');
+
+  const [customers, setCustomers] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+
+  const [workOrders, setWorkOrders] = useState([]);
+  const [workOrdersLoading, setWorkOrdersLoading] = useState(false);
+  const [workOrdersError, setWorkOrdersError] = useState('');
+
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const [vehiclesError, setVehiclesError] = useState('');
+  const [selectedVehicleId, setSelectedVehicleId] = useState('');
+
+  const [serviceType, setServiceType] = useState('');
+  const [price, setPrice] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+
+  const [statusSelections, setStatusSelections] = useState({});
+  const [statusUpdatingMap, setStatusUpdatingMap] = useState({});
+  const [statusError, setStatusError] = useState('');
+  const [statusSuccess, setStatusSuccess] = useState('');
+
+  const tokenRef = useRef('');
+  const vehicleRequestIdRef = useRef(0);
+
+  const hasOwnerBusinesses = ownerBusinesses.length > 0;
+  const hasCustomers = customers.length > 0;
+  const hasVehicles = vehicles.length > 0;
+  const hasWorkOrders = workOrders.length > 0;
+
+  async function safeJson(response) {
+    try {
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async function fetchWorkOrders({ signal } = {}) {
+    const token = tokenRef.current;
+    if (!token) {
+      return;
+    }
+
+    try {
+      setWorkOrdersLoading(true);
+      setWorkOrdersError('');
+
+      const response = await fetch(`${API_BASE_URL}/work-orders/my-business`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal,
+      });
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        setWorkOrdersError(
+          getErrorMessage(
+            response.status,
+            payload,
+            'İş emirleri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+          )
+        );
+        setWorkOrders([]);
+        return;
+      }
+
+      if (!Array.isArray(payload)) {
+        setWorkOrdersError('API yanıtı beklenen formatta değil.');
+        setWorkOrders([]);
+        return;
+      }
+
+      setWorkOrders(payload);
+      setStatusSelections((prev) => {
+        const next = { ...prev };
+        for (const item of payload) {
+          const currentStatus = (item?.status || '').toString().trim().toLowerCase();
+          if (STATUS_LABELS[currentStatus]) {
+            next[item.id] = currentStatus;
+          } else {
+            next[item.id] = 'received';
+          }
+        }
+        return next;
+      });
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setWorkOrdersError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+      setWorkOrders([]);
+    } finally {
+      if (!signal || !signal.aborted) {
+        setWorkOrdersLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    tokenRef.current = token || '';
+
+    if (!token) {
+      setTokenMissing(true);
+      setInitialLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchInitialData = async () => {
+      try {
+        setInitialLoading(true);
+        setAuthErrorMessage('');
+
+        const [meResponse, businessesResponse, customersResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }),
+          fetch(`${API_BASE_URL}/businesses`, {
+            signal: controller.signal,
+          }),
+          fetch(`${API_BASE_URL}/work-orders/my-business/customers`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }),
+        ]);
+
+        const [mePayload, businessesPayload, customersPayload] = await Promise.all([
+          safeJson(meResponse),
+          safeJson(businessesResponse),
+          safeJson(customersResponse),
+        ]);
+
+        if (!meResponse.ok) {
+          setAuthErrorMessage(
+            getErrorMessage(
+              meResponse.status,
+              mePayload,
+              'Kullanıcı bilgisi alınırken bir hata oluştu.'
+            )
+          );
+          return;
+        }
+
+        const role = (mePayload?.role || '').toString().trim().toLowerCase();
+        if (role !== 'business_owner') {
+          setIsBusinessOwner(false);
+          return;
+        }
+
+        if (!businessesResponse.ok) {
+          setAuthErrorMessage(
+            getErrorMessage(
+              businessesResponse.status,
+              businessesPayload,
+              'İşletmeler yüklenirken bir hata oluştu.'
+            )
+          );
+          return;
+        }
+
+        if (!Array.isArray(businessesPayload)) {
+          setAuthErrorMessage('İşletmeler için API yanıtı beklenen formatta değil.');
+          return;
+        }
+
+        if (!customersResponse.ok) {
+          setAuthErrorMessage(
+            getErrorMessage(
+              customersResponse.status,
+              customersPayload,
+              'Müşteri seçenekleri yüklenirken bir hata oluştu.'
+            )
+          );
+          return;
+        }
+
+        if (!Array.isArray(customersPayload)) {
+          setAuthErrorMessage('Müşteri seçenekleri için API yanıtı beklenen formatta değil.');
+          return;
+        }
+
+        const ownerId = mePayload?.id;
+        const filteredBusinesses = businessesPayload.filter(
+          (business) => business?.owner_id === ownerId
+        );
+
+        setOwnerBusinesses(filteredBusinesses);
+        setCustomers(customersPayload);
+        setCustomersLoading(false);
+
+        if (filteredBusinesses.length === 1) {
+          setSelectedBusinessId(String(filteredBusinesses[0].id));
+        }
+
+        await fetchWorkOrders({ signal: controller.signal });
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return;
+        }
+        setAuthErrorMessage('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+      } finally {
+        if (!controller.signal.aborted) {
+          setInitialLoading(false);
+          setCustomersLoading(false);
+        }
+      }
+    };
+
+    setCustomersLoading(true);
+    fetchInitialData();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    const token = tokenRef.current;
+
+    if (!token || !selectedCustomerId) {
+      setVehicles([]);
+      setSelectedVehicleId('');
+      setVehiclesLoading(false);
+      setVehiclesError('');
+      return;
+    }
+
+    const requestId = ++vehicleRequestIdRef.current;
+    const controller = new AbortController();
+
+    const loadVehicles = async () => {
+      try {
+        setVehiclesLoading(true);
+        setVehiclesError('');
+        setVehicles([]);
+        setSelectedVehicleId('');
+
+        const response = await fetch(
+          `${API_BASE_URL}/work-orders/my-business/customers/${selectedCustomerId}/vehicles`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        const payload = await safeJson(response);
+
+        if (requestId !== vehicleRequestIdRef.current) {
+          return;
+        }
+
+        if (!response.ok) {
+          setVehiclesError(
+            getErrorMessage(
+              response.status,
+              payload,
+              'Araç seçenekleri yüklenirken bir hata oluştu.'
+            )
+          );
+          return;
+        }
+
+        if (!Array.isArray(payload)) {
+          setVehiclesError('Araç seçenekleri için API yanıtı beklenen formatta değil.');
+          return;
+        }
+
+        setVehicles(payload);
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return;
+        }
+        if (requestId !== vehicleRequestIdRef.current) {
+          return;
+        }
+        setVehiclesError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+      } finally {
+        if (!controller.signal.aborted && requestId === vehicleRequestIdRef.current) {
+          setVehiclesLoading(false);
+        }
+      }
+    };
+
+    loadVehicles();
+
+    return () => {
+      controller.abort();
+    };
+  }, [selectedCustomerId]);
+
+  const isFormDisabled =
+    !hasOwnerBusinesses ||
+    !hasCustomers ||
+    !selectedCustomerId ||
+    !selectedVehicleId ||
+    formSubmitting ||
+    vehiclesLoading ||
+    !hasVehicles;
+
+  const ownerBusinessSelection = useMemo(() => {
+    if (!hasOwnerBusinesses) {
+      return null;
+    }
+
+    if (ownerBusinesses.length === 1) {
+      return (
+        <p className="owner-helper-text">
+          İşletme: {normalizeText(ownerBusinesses[0].name)}
+        </p>
+      );
+    }
+
+    return (
+      <label>
+        İşletme
+        <select
+          value={selectedBusinessId}
+          onChange={(event) => setSelectedBusinessId(event.target.value)}
+        >
+          <option value="">İşletme seçin</option>
+          {ownerBusinesses.map((business) => (
+            <option key={business.id} value={business.id}>
+              {normalizeText(business.name)}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }, [hasOwnerBusinesses, ownerBusinesses, selectedBusinessId]);
+
+  async function handleCreateWorkOrder(event) {
+    event.preventDefault();
+
+    setFormError('');
+    setFormSuccess('');
+    setStatusError('');
+    setStatusSuccess('');
+
+    const token = tokenRef.current;
+    if (!token) {
+      setFormError('İşletme sahibi panelini görüntülemek için giriş yapmalısınız.');
+      return;
+    }
+
+    const trimmedServiceType = serviceType.trim();
+    const customerId = Number(selectedCustomerId);
+    const vehicleId = Number(selectedVehicleId);
+    const businessId = Number(selectedBusinessId);
+    const numericPrice = Number(price);
+
+    if (!hasOwnerBusinesses) {
+      setFormError('Hesabınıza bağlı bir işletme bulunmuyor.');
+      return;
+    }
+
+    if (!customerId || Number.isNaN(customerId) || customerId <= 0) {
+      setFormError('Lütfen geçerli bir müşteri seçin.');
+      return;
+    }
+
+    if (!vehicleId || Number.isNaN(vehicleId) || vehicleId <= 0) {
+      setFormError('Lütfen geçerli bir araç seçin.');
+      return;
+    }
+
+    if (!businessId || Number.isNaN(businessId) || businessId <= 0) {
+      setFormError('Lütfen geçerli bir işletme seçin.');
+      return;
+    }
+
+    if (!trimmedServiceType) {
+      setFormError('Hizmet türü boş bırakılamaz.');
+      return;
+    }
+
+    if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+      setFormError('Fiyat sıfırdan büyük olmalıdır.');
+      return;
+    }
+
+    if (!hasVehicles) {
+      setFormError('Bu müşteriye kayıtlı araç bulunmuyor.');
+      return;
+    }
+
+    try {
+      setFormSubmitting(true);
+
+      const response = await fetch(`${API_BASE_URL}/work-orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          customer_id: customerId,
+          vehicle_id: vehicleId,
+          business_id: businessId,
+          service_type: trimmedServiceType,
+          price: numericPrice,
+        }),
+      });
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        setFormError(
+          getErrorMessage(
+            response.status,
+            payload,
+            'İş emri oluşturulurken bir hata oluştu.'
+          )
+        );
+        return;
+      }
+
+      setFormSuccess('İş emri başarıyla oluşturuldu.');
+      setServiceType('');
+      setPrice('');
+      await fetchWorkOrders();
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setFormError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+    } finally {
+      setFormSubmitting(false);
+    }
+  }
+
+  async function handleUpdateStatus(workOrderId) {
+    setStatusError('');
+    setStatusSuccess('');
+    setFormSuccess('');
+
+    const token = tokenRef.current;
+    if (!token) {
+      setStatusError('İşletme sahibi panelini görüntülemek için giriş yapmalısınız.');
+      return;
+    }
+
+    const nextStatus = statusSelections[workOrderId];
+    if (!STATUS_LABELS[nextStatus]) {
+      setStatusError('Geçerli bir durum seçin.');
+      return;
+    }
+
+    try {
+      setStatusUpdatingMap((prev) => ({
+        ...prev,
+        [workOrderId]: true,
+      }));
+
+      const response = await fetch(`${API_BASE_URL}/work-orders/${workOrderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: nextStatus,
+        }),
+      });
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        setStatusError(
+          getErrorMessage(
+            response.status,
+            payload,
+            'İş emri durumu güncellenirken bir hata oluştu.'
+          )
+        );
+        return;
+      }
+
+      setStatusSuccess('İş emri durumu başarıyla güncellendi.');
+      await fetchWorkOrders();
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setStatusError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+    } finally {
+      setStatusUpdatingMap((prev) => ({
+        ...prev,
+        [workOrderId]: false,
+      }));
+    }
+  }
+
+  if (tokenMissing) {
+    return (
+      <section className="owner-panel-page">
+        <div className="owner-panel-header">
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
+        </div>
+        <p>İşletme sahibi panelini görüntülemek için giriş yapmalısınız.</p>
+      </section>
+    );
+  }
+
+  if (initialLoading) {
+    return (
+      <section className="owner-panel-page">
+        <div className="owner-panel-header">
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
+        </div>
+        <p>Panel verileri yükleniyor...</p>
+      </section>
+    );
+  }
+
+  if (authErrorMessage) {
+    return (
+      <section className="owner-panel-page">
+        <div className="owner-panel-header">
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
+        </div>
+        <p className="ui-error">{authErrorMessage}</p>
+      </section>
+    );
+  }
+
+  if (!isBusinessOwner) {
+    return (
+      <section className="owner-panel-page">
+        <div className="owner-panel-header">
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
+        </div>
+        <p>Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="owner-panel-page">
+      <div className="owner-panel-header">
+        <h2>İşletme Sahibi Paneli</h2>
+        <button onClick={onBack}>İşletmelere Geri Dön</button>
+      </div>
+
+      <div className="owner-panel-section">
+        <h3>Yeni İş Emri Oluştur</h3>
+
+        {!hasOwnerBusinesses && (
+          <p className="ui-error">Hesabınıza bağlı bir işletme bulunmuyor.</p>
+        )}
+
+        {customersLoading && <p>Müşteri seçenekleri yükleniyor...</p>}
+        {!customersLoading && hasOwnerBusinesses && !hasCustomers && (
+          <p>İş emri oluşturulabilecek aktif müşteri bulunmuyor.</p>
+        )}
+
+        <form className="owner-form" onSubmit={handleCreateWorkOrder}>
+          <label>
+            Müşteri
+            <select
+              value={selectedCustomerId}
+              onChange={(event) => {
+                setSelectedCustomerId(event.target.value);
+                setFormError('');
+                setFormSuccess('');
+              }}
+              disabled={!hasOwnerBusinesses || !hasCustomers || formSubmitting}
+            >
+              <option value="">Müşteri seçin</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {parseCustomerLabel(customer)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Araç
+            <select
+              value={selectedVehicleId}
+              onChange={(event) => setSelectedVehicleId(event.target.value)}
+              disabled={!selectedCustomerId || vehiclesLoading || !hasVehicles || formSubmitting}
+            >
+              <option value="">Araç seçin</option>
+              {vehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {parseVehicleLabel(vehicle)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {vehiclesLoading && <p>Araç seçenekleri yükleniyor...</p>}
+          {vehiclesError && <p className="ui-error">{vehiclesError}</p>}
+          {!vehiclesLoading && selectedCustomerId && !vehiclesError && !hasVehicles && (
+            <p>Bu müşteriye kayıtlı araç bulunmuyor.</p>
+          )}
+
+          {ownerBusinessSelection}
+
+          <label>
+            Hizmet Türü
+            <input
+              type="text"
+              value={serviceType}
+              onChange={(event) => setServiceType(event.target.value)}
+              placeholder="Periyodik Bakım"
+              disabled={!hasOwnerBusinesses || formSubmitting}
+            />
+          </label>
+
+          <label>
+            Fiyat
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              disabled={!hasOwnerBusinesses || formSubmitting}
+            />
+          </label>
+
+          {formError && <p className="ui-error">{formError}</p>}
+          {formSuccess && <p className="ui-success">{formSuccess}</p>}
+
+          <button type="submit" disabled={isFormDisabled}>
+            {formSubmitting ? 'Oluşturuluyor...' : 'İş Emri Oluştur'}
+          </button>
+        </form>
+      </div>
+
+      <div className="owner-panel-section">
+        <h3>İş Emirleri</h3>
+
+        {workOrdersLoading && <p>İş emirleri yükleniyor...</p>}
+        {workOrdersError && <p className="ui-error">{workOrdersError}</p>}
+        {statusError && <p className="ui-error">{statusError}</p>}
+        {statusSuccess && <p className="ui-success">{statusSuccess}</p>}
+
+        {!workOrdersLoading && !workOrdersError && !hasWorkOrders && (
+          <p>İşletmenize ait henüz bir iş emri bulunmuyor.</p>
+        )}
+
+        {!workOrdersLoading && !workOrdersError && hasWorkOrders && (
+          <div className="owner-workorder-list">
+            {workOrders.map((workOrder) => {
+              const selectedStatus = statusSelections[workOrder.id] || 'received';
+              const isUpdating = Boolean(statusUpdatingMap[workOrder.id]);
+
+              return (
+                <article key={workOrder.id} className="owner-workorder-card">
+                  <h4>İş Emri #{normalizeText(workOrder.id)}</h4>
+                  <p><strong>Müşteri:</strong> {normalizeText(workOrder.customer_name)}</p>
+                  <p><strong>Müşteri Email:</strong> {normalizeText(workOrder.customer_email)}</p>
+                  <p><strong>Araç Plakası:</strong> {normalizeText(workOrder.vehicle_plate)}</p>
+                  <p>
+                    <strong>Araç:</strong>{' '}
+                    {`${normalizeText(workOrder.vehicle_make)} ${normalizeText(workOrder.vehicle_model)}`}
+                  </p>
+                  <p><strong>İşletme:</strong> {normalizeText(workOrder.business_name)}</p>
+                  <p><strong>Hizmet Türü:</strong> {normalizeText(workOrder.service_type)}</p>
+                  <p><strong>Fiyat:</strong> {formatCurrency(workOrder.price)}</p>
+                  <p><strong>Durum:</strong> {getStatusLabel(workOrder.status)}</p>
+                  <p><strong>Oluşturulma Tarihi:</strong> {formatDate(workOrder.created_at)}</p>
+
+                  <div className="owner-status-row">
+                    <select
+                      value={selectedStatus}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setStatusSelections((prev) => ({
+                          ...prev,
+                          [workOrder.id]: value,
+                        }));
+                      }}
+                      disabled={isUpdating}
+                    >
+                      {STATUS_OPTIONS.map((statusOption) => (
+                        <option key={statusOption.value} value={statusOption.value}>
+                          {statusOption.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(workOrder.id)}
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? 'Güncelleniyor...' : 'Durumu Güncelle'}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export default OwnerWorkOrdersPanel;

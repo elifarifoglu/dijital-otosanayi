@@ -152,3 +152,77 @@ div {
   margin: 0 0 8px;
   color: #b42318;
 }
+
+.owner-panel-page {
+  max-width: 1080px;
+}
+
+.owner-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.owner-panel-section {
+  background-color: #f9f9f9;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.owner-form,
+.owner-workorder-form {
+  display: grid;
+  gap: 10px;
+}
+
+.owner-form label,
+.owner-workorder-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.owner-form input,
+.owner-form select,
+.owner-workorder-form input,
+.owner-workorder-form select {
+  padding: 10px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.owner-helper-text {
+  margin: 0;
+}
+
+.owner-workorder-list {
+  display: grid;
+  gap: 12px;
+}
+
+.owner-workorder-card {
+  background-color: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+}
+
+.owner-workorder-card h4 {
+  margin-top: 0;
+}
+
+.owner-status-row,
+.owner-status-editor {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.owner-status-row select,
+.owner-status-editor select {
+  min-width: 220px;
+}
