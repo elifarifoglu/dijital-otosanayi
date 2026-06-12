@@ -66,3 +66,89 @@ div {
   color: #067647;
   margin: 0;
 }
+
+.customer-workorders-page {
+  max-width: 980px;
+}
+
+.customer-workorders-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workorder-list {
+  display: grid;
+  gap: 16px;
+}
+
+.workorder-card {
+  background-color: #f9f9f9;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+.workorder-card h3 {
+  margin-top: 0;
+}
+
+.workorder-timeline-wrapper {
+  margin-top: 10px;
+}
+
+.workorder-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.timeline-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid #d0d5dd;
+  padding: 6px 10px;
+  background-color: #f2f4f7;
+}
+
+.timeline-step.completed {
+  border-color: #84ca93;
+  background-color: #ecfdf3;
+}
+
+.timeline-step.active {
+  border-color: #2e90fa;
+  background-color: #eff8ff;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #98a2b3;
+}
+
+.timeline-step.completed .timeline-dot {
+  background-color: #16a34a;
+}
+
+.timeline-step.active .timeline-dot {
+  background-color: #1570ef;
+}
+
+.timeline-label {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.timeline-cancelled,
+.timeline-unknown {
+  margin: 0 0 8px;
+  color: #b42318;
+}
