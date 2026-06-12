@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db import get_db
 from app.dependencies import require_roles
@@ -9,6 +9,7 @@ from app.models.user import User, UserRole
 from app.models.vehicle import Vehicle
 from app.models.workorder import WorkOrder, WorkOrderStatus
 from app.schemas.workorder import (
+    OwnerWorkOrderResponse,
     WorkOrderAveragePriceResponse,
     WorkOrderCreate,
     WorkOrderCreateResponse,
@@ -31,6 +32,46 @@ def to_api_status(status_value: WorkOrderStatus | str) -> str:
     if value == WorkOrderStatus.ready_for_delivery.value:
         return "ready"
     return value
+
+
+@router.get("/my-business", response_model=list[OwnerWorkOrderResponse])
+def list_my_business_work_orders(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("business_owner")),
+):
+    workorders = (
+        db.query(WorkOrder)
+        .join(Business, WorkOrder.business_id == Business.id)
+        .options(
+            joinedload(WorkOrder.customer),
+            joinedload(WorkOrder.vehicle),
+            joinedload(WorkOrder.business),
+        )
+        .filter(Business.owner_id == current_user.id)
+        .order_by(WorkOrder.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": wo.id,
+            "customer_id": wo.customer_id,
+            "customer_name": wo.customer.full_name if wo.customer else None,
+            "customer_email": wo.customer.email if wo.customer else None,
+            "vehicle_id": wo.vehicle_id,
+            "vehicle_plate": wo.vehicle.plate if wo.vehicle else None,
+            "vehicle_make": wo.vehicle.make if wo.vehicle else None,
+            "vehicle_model": wo.vehicle.model if wo.vehicle else None,
+            "business_id": wo.business_id,
+            "business_name": wo.business.name if wo.business else None,
+            "service_type": wo.service_type,
+            "price": wo.estimated_price,
+            "status": to_api_status(wo.status),
+            "created_at": wo.created_at,
+            "updated_at": wo.updated_at,
+        }
+        for wo in workorders
+    ]
 
 
 @router.get("/average-price", response_model=WorkOrderAveragePriceResponse)
