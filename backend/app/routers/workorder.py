@@ -9,6 +9,8 @@ from app.models.user import User, UserRole
 from app.models.vehicle import Vehicle
 from app.models.workorder import WorkOrder, WorkOrderStatus
 from app.schemas.workorder import (
+    OwnerCustomerOptionResponse,
+    OwnerCustomerVehicleOptionResponse,
     OwnerWorkOrderResponse,
     WorkOrderAveragePriceResponse,
     WorkOrderCreate,
@@ -32,6 +34,84 @@ def to_api_status(status_value: WorkOrderStatus | str) -> str:
     if value == WorkOrderStatus.ready_for_delivery.value:
         return "ready"
     return value
+
+
+@router.get("/my-business/customers", response_model=list[OwnerCustomerOptionResponse])
+def list_active_customer_options(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("business_owner")),
+):
+    _ = current_user
+
+    customers = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.customer,
+            User.is_active.is_(True),
+        )
+        .order_by(
+            func.coalesce(func.nullif(User.full_name, ""), User.email),
+            User.id.asc(),
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": customer.id,
+            "full_name": customer.full_name,
+            "email": customer.email,
+            "phone": customer.phone,
+        }
+        for customer in customers
+    ]
+
+
+@router.get(
+    "/my-business/customers/{customer_id}/vehicles",
+    response_model=list[OwnerCustomerVehicleOptionResponse],
+)
+def list_customer_vehicle_options(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("business_owner")),
+):
+    _ = current_user
+
+    customer = (
+        db.query(User)
+        .filter(
+            User.id == customer_id,
+            User.role == UserRole.customer,
+            User.is_active.is_(True),
+        )
+        .first()
+    )
+
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Müşteri bulunamadı",
+        )
+
+    vehicles = (
+        db.query(Vehicle)
+        .filter(Vehicle.owner_id == customer_id)
+        .order_by(Vehicle.plate.asc(), Vehicle.id.asc())
+        .all()
+    )
+
+    return [
+        {
+            "id": vehicle.id,
+            "owner_id": vehicle.owner_id,
+            "plate": vehicle.plate,
+            "make": vehicle.make,
+            "model": vehicle.model,
+            "year": vehicle.year,
+        }
+        for vehicle in vehicles
+    ]
 
 
 @router.get("/my-business", response_model=list[OwnerWorkOrderResponse])

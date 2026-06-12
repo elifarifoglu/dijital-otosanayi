@@ -56,6 +56,26 @@ class OwnerWorkOrderResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OwnerCustomerOptionResponse(BaseModel):
+    id: int
+    full_name: str | None = None
+    email: str
+    phone: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OwnerCustomerVehicleOptionResponse(BaseModel):
+    id: int
+    owner_id: int
+    plate: str
+    make: str
+    model: str
+    year: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class WorkOrderStatusUpdate(BaseModel):
     status: str
 
