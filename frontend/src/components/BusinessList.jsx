@@ -43,37 +43,72 @@ function BusinessList({ onSelectBusiness }) {
   };
 
   if (loading) {
-    return <div>Yükleniyor...</div>;
+    return (
+      <section className="business-list-page">
+        <header className="business-list-header">
+          <h2>İşletmeler</h2>
+          <p>Bölgenizdeki işletmeleri inceleyip detaylarını görüntüleyin.</p>
+        </header>
+        <p className="business-list-state">İşletmeler yükleniyor...</p>
+      </section>
+    );
   }
 
   if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
+    return (
+      <section className="business-list-page">
+        <header className="business-list-header">
+          <h2>İşletmeler</h2>
+          <p>Bölgenizdeki işletmeleri inceleyip detaylarını görüntüleyin.</p>
+        </header>
+        <p className="ui-error business-list-state">{error}</p>
+      </section>
+    );
   }
 
   if (businesses.length === 0) {
-    return <div>Henüz kayıtlı işletme bulunamadı.</div>;
+    return (
+      <section className="business-list-page">
+        <header className="business-list-header">
+          <h2>İşletmeler</h2>
+          <p>Bölgenizdeki işletmeleri inceleyip detaylarını görüntüleyin.</p>
+        </header>
+        <p className="business-list-state">Henüz kayıtlı işletme bulunamadı.</p>
+      </section>
+    );
   }
 
   return (
-    <div>
-      <h2>İşletmeler</h2>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+    <section className="business-list-page">
+      <header className="business-list-header">
+        <h2>İşletmeler</h2>
+        <p>Bölgenizdeki işletmeleri inceleyip detaylarını görüntüleyin.</p>
+      </header>
+
+      <ul className="business-list-grid" aria-label="İşletme listesi">
         {businesses.map((business) => (
-          <div key={business.id} style={{
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            padding: '1rem',
-            backgroundColor: '#f9f9f9'
-          }}>
+          <li key={business.id} className="business-list-card">
             <h3>{business.name}</h3>
+            <p className="business-list-description">{business.description || 'Açıklama belirtilmemiş.'}</p>
             <p><strong>Adres:</strong> {business.address || 'Belirtilmemiş'}</p>
             <p><strong>Telefon:</strong> {business.phone || 'Belirtilmemiş'}</p>
-            <p><strong>Açıklama:</strong> {business.description || 'Belirtilmemiş'}</p>
-            <button onClick={() => onSelectBusiness(business.id)}>Detayları Gör</button>
-          </div>
+            <p>
+              <strong>Ortalama Puan:</strong>{' '}
+              {business.average_rating === null || business.average_rating === undefined
+                ? 'Henüz puan yok'
+                : Number(business.average_rating).toFixed(1)}
+            </p>
+            <button
+              type="button"
+              className="business-list-action"
+              onClick={() => onSelectBusiness(business.id)}
+            >
+              Detayları Gör
+            </button>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
 

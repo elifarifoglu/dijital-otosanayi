@@ -301,24 +301,38 @@ function BusinessDetail({ businessId, onBack }) {
   };
 
   if (businessLoading) {
-    return <div>Yükleniyor...</div>;
+    return (
+      <section className="business-detail-page">
+        <div className="business-detail-topbar">
+          <h2>İşletme Detayı</h2>
+          <button type="button" className="business-detail-back-button" onClick={onBack}>Geri Dön</button>
+        </div>
+        <p className="business-detail-state">İşletme bilgileri yükleniyor...</p>
+      </section>
+    );
   }
 
   if (businessError) {
     return (
-      <div>
-        <div style={{ color: 'red' }}>{businessError}</div>
-        <button onClick={onBack}>Listeye Geri Dön</button>
-      </div>
+      <section className="business-detail-page">
+        <div className="business-detail-topbar">
+          <h2>İşletme Detayı</h2>
+          <button type="button" className="business-detail-back-button" onClick={onBack}>Geri Dön</button>
+        </div>
+        <p className="ui-error business-detail-state">{businessError}</p>
+      </section>
     );
   }
 
   if (!business) {
     return (
-      <div>
-        <div>Veri yüklenemedi.</div>
-        <button onClick={onBack}>Listeye Geri Dön</button>
-      </div>
+      <section className="business-detail-page">
+        <div className="business-detail-topbar">
+          <h2>İşletme Detayı</h2>
+          <button type="button" className="business-detail-back-button" onClick={onBack}>Geri Dön</button>
+        </div>
+        <p className="business-detail-state">Veri yüklenemedi.</p>
+      </section>
     );
   }
 
@@ -327,9 +341,13 @@ function BusinessDetail({ businessId, onBack }) {
     : Number(business.average_rating).toFixed(1);
 
   return (
-    <div className="business-detail-page">
-      <h2>{business.name}</h2>
-      <div className="business-detail-card">
+    <section className="business-detail-page">
+      <div className="business-detail-topbar">
+        <h2>{business.name}</h2>
+        <button type="button" className="business-detail-back-button" onClick={onBack}>Geri Dön</button>
+      </div>
+
+      <div className="business-detail-card business-summary-card">
         <p><strong>Adres:</strong> {business.address || 'Belirtilmemiş'}</p>
         <p><strong>Telefon:</strong> {business.phone || 'Belirtilmemiş'}</p>
         <p><strong>Açıklama:</strong> {business.description || 'Belirtilmemiş'}</p>
@@ -337,7 +355,7 @@ function BusinessDetail({ businessId, onBack }) {
         <p><strong>Yorum Sayısı:</strong> {business.review_count ?? 0}</p>
       </div>
 
-      <div className="review-section">
+      <div className="review-section review-list-section">
         <h3>Yorumlar</h3>
         {reviewsLoading && <p>Yorumlar yükleniyor...</p>}
         {reviewsError && <p className="ui-error">{reviewsError}</p>}
@@ -364,30 +382,30 @@ function BusinessDetail({ businessId, onBack }) {
         )}
       </div>
 
-      <div className="review-section">
+      <div className="review-section review-form-section">
         <h3>Yorum Bırak</h3>
-        {authStatus === 'checking' && <p>Kullanıcı bilgisi kontrol ediliyor...</p>}
+        {authStatus === 'checking' && <p className="business-detail-info">Kullanıcı bilgisi kontrol ediliyor...</p>}
 
         {authStatus === 'no-token' && (
-          <p>Yorum bırakmak için müşteri hesabıyla giriş yapmalısınız.</p>
+          <p className="business-detail-info">Yorum bırakmak için müşteri hesabıyla giriş yapmalısınız.</p>
         )}
 
         {authStatus === 'unauthorized' && (
-          <p>Oturumunuz geçersiz veya süresi dolmuş. Yorum bırakmak için tekrar giriş yapın.</p>
+          <p className="business-detail-info">Oturumunuz geçersiz veya süresi dolmuş. Yorum bırakmak için tekrar giriş yapın.</p>
         )}
 
         {authStatus === 'authenticated' && currentUserRole && currentUserRole !== 'customer' && (
-          <p>Yorum bırakmak için müşteri hesabı gerekir.</p>
+          <p className="business-detail-info">Yorum bırakmak için müşteri hesabı gerekir.</p>
         )}
 
         {authStatus === 'authenticated' && currentUserRole === 'customer' && reviewableLoading && (
-          <p>Yorum yapılabilir hizmetler yükleniyor...</p>
+          <p className="business-detail-info">Yorum yapılabilir hizmetler yükleniyor...</p>
         )}
         {authStatus === 'authenticated' && currentUserRole === 'customer' && reviewableError && (
           <p className="ui-error">{reviewableError}</p>
         )}
         {authStatus === 'authenticated' && currentUserRole === 'customer' && !reviewableLoading && !reviewableError && reviewableWorkorders.length === 0 && (
-          <p>Bu işletme için yorum yapılabilir hizmet kaydınız bulunmuyor.</p>
+          <p className="business-detail-info">Bu işletme için yorum yapılabilir hizmet kaydınız bulunmuyor.</p>
         )}
 
         {authStatus === 'authenticated' && currentUserRole === 'customer' && !reviewableLoading && !reviewableError && reviewableWorkorders.length > 0 && (
@@ -437,9 +455,7 @@ function BusinessDetail({ businessId, onBack }) {
           </form>
         )}
       </div>
-
-      <button onClick={onBack}>Listeye Geri Dön</button>
-    </div>
+    </section>
   );
 }
 
