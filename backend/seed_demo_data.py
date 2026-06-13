@@ -7,7 +7,7 @@ from typing import Iterable
 
 from sqlalchemy.orm import Session
 
-from app.auth import hash_password
+from passlib.context import CryptContext
 from app.db import SessionLocal
 from app.models.business import Business
 from app.models.business_service import BusinessService
@@ -21,6 +21,10 @@ from app.models.workorder import WorkOrder, WorkOrderStatus
 def log(message: str) -> None:
     print(f"[seed-demo] {message}")
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_demo_password(password: str) -> str:
+    return pwd_context.hash(password)
 
 def upsert_user(
     db: Session,
@@ -31,7 +35,7 @@ def upsert_user(
     role: UserRole,
 ) -> tuple[User, str]:
     user = db.query(User).filter(User.email == email).first()
-    password_hash = hash_password(password)
+    password_hash = hash_demo_password(password)
 
     if user:
         changed = False
