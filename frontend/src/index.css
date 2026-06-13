@@ -385,19 +385,115 @@ div {
   flex-wrap: wrap;
 }
 
+.customer-workorders-header h2 {
+  margin: 0 0 6px;
+}
+
+.customer-workorders-header p {
+  margin: 0;
+  color: #4b5563;
+}
+
 .workorder-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
   display: grid;
   gap: 16px;
 }
 
+.workorder-card-wrapper {
+  list-style: none;
+}
+
 .workorder-card {
-  background-color: #f9f9f9;
-  border: 1px solid #e2e2e2;
-  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
 }
 
 .workorder-card h3 {
   margin-top: 0;
+}
+
+.workorder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.workorder-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.workorder-status-badge {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.workorder-meta-primary {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.workorder-meta-primary p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.workorder-timeline-wrap {
+  background-color: #f9f9f9;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.workorder-meta-secondary {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.workorder-meta-date {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.workorder-state-message {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+}
+
+.owner-state-message {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 14px;
 }
 
 .workorder-timeline-wrapper {
@@ -484,6 +580,26 @@ div {
   gap: 10px;
 }
 
+.owner-form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.owner-form-grid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.owner-form-grid input,
+.owner-form-grid select {
+  padding: 10px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 .owner-form label,
 .owner-workorder-form label {
   display: grid;
@@ -521,16 +637,27 @@ div {
 }
 
 .owner-status-row,
-.owner-status-editor {
+.owner-status-editor,
+.owner-action-row {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ececec;
 }
 
 .owner-status-row select,
-.owner-status-editor select {
+.owner-status-editor select,
+.owner-action-row select {
   min-width: 220px;
+  flex: 1;
+}
+
+.owner-status-row button,
+.owner-action-row button {
+  flex-shrink: 0;
 }
 
 .service-management-section {
@@ -605,6 +732,49 @@ div {
 
   .business-list-action,
   .business-detail-back-button {
+    width: 100%;
+  }
+
+  .customer-workorders-header,
+  .owner-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workorder-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workorder-status-badge {
+    align-self: flex-start;
+  }
+
+  .owner-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-action-row,
+  .owner-status-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .owner-action-row select,
+  .owner-status-row select,
+  .owner-action-row button,
+  .owner-status-row button {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .service-price-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .service-price-actions input,
+  .service-price-actions button {
     width: 100%;
   }
 }

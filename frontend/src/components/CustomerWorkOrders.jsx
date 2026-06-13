@@ -192,46 +192,63 @@ function CustomerWorkOrders({ onBack }) {
 
   const content = useMemo(() => {
     if (loading) {
-      return <p>İş emirleriniz yükleniyor...</p>;
+      return <p className="workorder-state-message">İş emirleriniz yükleniyor...</p>;
     }
 
     if (tokenMissing) {
-      return <p>İş emirlerinizi görüntülemek için müşteri hesabıyla giriş yapmalısınız.</p>;
+      return <p className="workorder-state-message">İş emirlerinizi görüntülemek için müşteri hesabıyla giriş yapmalısınız.</p>;
     }
 
     if (errorMessage) {
-      return <p className="ui-error">{errorMessage}</p>;
+      return <p className="workorder-state-message ui-error">{errorMessage}</p>;
     }
 
     if (workOrders.length === 0) {
-      return <p>Henüz kayıtlı bir iş emriniz bulunmuyor.</p>;
+      return <p className="workorder-state-message">Henüz kayıtlı bir iş emriniz bulunmuyor.</p>;
     }
 
     return (
-      <div className="workorder-list">
+      <ul className="workorder-list">
         {workOrders.map((workOrder) => (
-          <article key={workOrder.id} className="workorder-card">
-            <h3>İş Emri #{normalizeText(workOrder.id)}</h3>
-            <p><strong>İşletme:</strong> {normalizeText(workOrder.business_name)}</p>
-            <p><strong>Araç Plakası:</strong> {normalizeText(workOrder.vehicle_plate)}</p>
-            <p><strong>Araç Modeli:</strong> {normalizeText(workOrder.vehicle_model)}</p>
-            <p><strong>Hizmet Türü:</strong> {normalizeText(workOrder.service_type)}</p>
-            <p><strong>Fiyat:</strong> {formatCurrency(workOrder.price)}</p>
-            <p><strong>Oluşturulma Tarihi:</strong> {formatDate(workOrder.created_at)}</p>
-            <p><strong>Güncelleme Tarihi:</strong> {formatDate(workOrder.updated_at)}</p>
-            <p><strong>Güncel Durum:</strong> {getStatusLabel(workOrder.status)}</p>
-            <WorkOrderStatusTimeline status={workOrder.status} />
-          </article>
+          <li key={workOrder.id} className="workorder-card-wrapper">
+            <article className="workorder-card">
+              <div className="workorder-header">
+                <h3>İş Emri #{normalizeText(workOrder.id)}</h3>
+                <p className="workorder-status-badge">{getStatusLabel(workOrder.status)}</p>
+              </div>
+              
+              <div className="workorder-meta-primary">
+                <p><strong>İşletme:</strong> {normalizeText(workOrder.business_name)}</p>
+                <p><strong>Araç:</strong> {normalizeText(workOrder.vehicle_plate)} - {normalizeText(workOrder.vehicle_model)}</p>
+                <p><strong>Hizmet:</strong> {normalizeText(workOrder.service_type)}</p>
+                <p><strong>Fiyat:</strong> {formatCurrency(workOrder.price)}</p>
+              </div>
+              
+              <div className="workorder-timeline-wrap">
+                <WorkOrderStatusTimeline status={workOrder.status} />
+              </div>
+              
+              <div className="workorder-meta-secondary">
+                <p className="workorder-meta-date"><strong>Oluşturulma:</strong> {formatDate(workOrder.created_at)}</p>
+                {workOrder.updated_at && (
+                  <p className="workorder-meta-date"><strong>Güncelleme:</strong> {formatDate(workOrder.updated_at)}</p>
+                )}
+              </div>
+            </article>
+          </li>
         ))}
-      </div>
+      </ul>
     );
   }, [loading, tokenMissing, errorMessage, workOrders]);
 
   return (
     <section className="customer-workorders-page">
       <div className="customer-workorders-header">
-        <h2>İş Emirlerim</h2>
-        <button onClick={onBack}>İşletmelere Geri Dön</button>
+        <div>
+          <h2>İş Emirlerim</h2>
+          <p>Oluşturduğunuz iş emirlerinin durum ve detaylarını takip edin.</p>
+        </div>
+        <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
       </div>
       {content}
     </section>

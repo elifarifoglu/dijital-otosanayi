@@ -924,10 +924,12 @@ function OwnerWorkOrdersPanel({ onBack }) {
     return (
       <section className="owner-panel-page">
         <div className="owner-panel-header">
-          <h2>İşletme Sahibi Paneli</h2>
-          <button onClick={onBack}>İşletmelere Geri Dön</button>
+          <div>
+            <h2>İşletme Sahibi Paneli</h2>
+          </div>
+          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
         </div>
-        <p>İşletme sahibi panelini görüntülemek için giriş yapmalısınız.</p>
+        <p className="workorder-state-message">İşletme sahibi panelini görüntülemek için giriş yapmalısınız.</p>
       </section>
     );
   }
@@ -936,10 +938,12 @@ function OwnerWorkOrdersPanel({ onBack }) {
     return (
       <section className="owner-panel-page">
         <div className="owner-panel-header">
-          <h2>İşletme Sahibi Paneli</h2>
-          <button onClick={onBack}>İşletmelere Geri Dön</button>
+          <div>
+            <h2>İşletme Sahibi Paneli</h2>
+          </div>
+          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
         </div>
-        <p>Panel verileri yükleniyor...</p>
+        <p className="workorder-state-message">Panel verileri yükleniyor...</p>
       </section>
     );
   }
@@ -948,10 +952,12 @@ function OwnerWorkOrdersPanel({ onBack }) {
     return (
       <section className="owner-panel-page">
         <div className="owner-panel-header">
-          <h2>İşletme Sahibi Paneli</h2>
-          <button onClick={onBack}>İşletmelere Geri Dön</button>
+          <div>
+            <h2>İşletme Sahibi Paneli</h2>
+          </div>
+          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
         </div>
-        <p className="ui-error">{authErrorMessage}</p>
+        <p className="workorder-state-message ui-error">{authErrorMessage}</p>
       </section>
     );
   }
@@ -960,10 +966,12 @@ function OwnerWorkOrdersPanel({ onBack }) {
     return (
       <section className="owner-panel-page">
         <div className="owner-panel-header">
-          <h2>İşletme Sahibi Paneli</h2>
-          <button onClick={onBack}>İşletmelere Geri Dön</button>
+          <div>
+            <h2>İşletme Sahibi Paneli</h2>
+          </div>
+          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
         </div>
-        <p>Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.</p>
+        <p className="workorder-state-message">Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.</p>
       </section>
     );
   }
@@ -971,8 +979,11 @@ function OwnerWorkOrdersPanel({ onBack }) {
   return (
     <section className="owner-panel-page">
       <div className="owner-panel-header">
-        <h2>İşletme Sahibi Paneli</h2>
-        <button onClick={onBack}>İşletmelere Geri Dön</button>
+        <div>
+          <h2>İşletme Sahibi Paneli</h2>
+          <p>İş emirleri oluşturun, durumlarını güncelleyin ve hizmetleri yönetin.</p>
+        </div>
+        <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
       </div>
 
       <div className="owner-panel-section">
@@ -987,7 +998,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
           <p>İş emri oluşturulabilecek aktif müşteri bulunmuyor.</p>
         )}
 
-        <form className="owner-form" onSubmit={handleCreateWorkOrder}>
+        <form className="owner-form owner-form-grid" onSubmit={handleCreateWorkOrder}>
           <label>
             Müşteri
             <select
@@ -1024,10 +1035,10 @@ function OwnerWorkOrdersPanel({ onBack }) {
             </select>
           </label>
 
-          {vehiclesLoading && <p>Araç seçenekleri yükleniyor...</p>}
-          {vehiclesError && <p className="ui-error">{vehiclesError}</p>}
+          {vehiclesLoading && <p className="owner-state-message">Araç seçenekleri yükleniyor...</p>}
+          {vehiclesError && <p className="owner-state-message ui-error">{vehiclesError}</p>}
           {!vehiclesLoading && selectedCustomerId && !vehiclesError && !hasVehicles && (
-            <p>Bu müşteriye kayıtlı araç bulunmuyor.</p>
+            <p className="owner-state-message">Bu müşteriye kayıtlı araç bulunmuyor.</p>
           )}
 
           {ownerBusinessSelection}
@@ -1098,7 +1109,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
                   <p><strong>Durum:</strong> {getStatusLabel(workOrder.status)}</p>
                   <p><strong>Oluşturulma Tarihi:</strong> {formatDate(workOrder.created_at)}</p>
 
-                  <div className="owner-status-row">
+                  <div className="owner-action-row">
                     <select
                       value={selectedStatus}
                       onChange={(event) => {
