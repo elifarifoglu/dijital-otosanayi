@@ -133,6 +133,18 @@ function OwnerWorkOrdersPanel({ onBack }) {
   const [statusError, setStatusError] = useState('');
   const [statusSuccess, setStatusSuccess] = useState('');
 
+  const [serviceCatalog, setServiceCatalog] = useState([]);
+  const [businessServices, setBusinessServices] = useState([]);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [newMinimumPrice, setNewMinimumPrice] = useState('');
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesError, setServicesError] = useState('');
+  const [servicesSuccess, setServicesSuccess] = useState('');
+  const [serviceSubmitting, setServiceSubmitting] = useState(false);
+  const [priceEditMap, setPriceEditMap] = useState({});
+  const [updatingServiceId, setUpdatingServiceId] = useState(null);
+  const [deletingServiceId, setDeletingServiceId] = useState(null);
+
   const tokenRef = useRef('');
   const vehicleRequestIdRef = useRef(0);
 
@@ -208,6 +220,63 @@ function OwnerWorkOrdersPanel({ onBack }) {
     } finally {
       if (!signal || !signal.aborted) {
         setWorkOrdersLoading(false);
+      }
+    }
+  }
+
+  async function fetchBusinessServices(businessId, { signal } = {}) {
+    if (!businessId) {
+      setBusinessServices([]);
+      setPriceEditMap({});
+      return;
+    }
+
+    try {
+      setServicesLoading(true);
+      setServicesError('');
+
+      const response = await fetch(`${API_BASE_URL}/businesses/${businessId}/services`, {
+        signal,
+      });
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        setServicesError(
+          getErrorMessage(
+            response.status,
+            payload,
+            'İşletme hizmetleri yüklenirken bir hata oluştu.'
+          )
+        );
+        setBusinessServices([]);
+        setPriceEditMap({});
+        return;
+      }
+
+      if (!Array.isArray(payload)) {
+        setServicesError('API yanıtı beklenen formatta değil.');
+        setBusinessServices([]);
+        setPriceEditMap({});
+        return;
+      }
+
+      setBusinessServices(payload);
+      const nextMap = {};
+      payload.forEach((item) => {
+        nextMap[item.service_id] = String(item.minimum_price);
+      });
+      setPriceEditMap(nextMap);
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setServicesError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+      setBusinessServices([]);
+      setPriceEditMap({});
+    } finally {
+      if (!signal || !signal.aborted) {
+        setServicesLoading(false);
       }
     }
   }
@@ -316,6 +385,14 @@ function OwnerWorkOrdersPanel({ onBack }) {
         }
 
         await fetchWorkOrders({ signal: controller.signal });
+
+        const catalogResponse = await fetch(`${API_BASE_URL}/services`, {
+          signal: controller.signal,
+        });
+        const catalogPayload = await safeJson(catalogResponse);
+        if (catalogResponse.ok && Array.isArray(catalogPayload)) {
+          setServiceCatalog(catalogPayload);
+        }
       } catch (error) {
         if (error?.name === 'AbortError') {
           return;
@@ -413,6 +490,27 @@ function OwnerWorkOrdersPanel({ onBack }) {
     };
   }, [selectedCustomerId]);
 
+  useEffect(() => {
+    setSelectedServiceId('');
+    setNewMinimumPrice('');
+    setServicesError('');
+    setServicesSuccess('');
+
+    if (!selectedBusinessId) {
+      setBusinessServices([]);
+      setPriceEditMap({});
+      return;
+    }
+
+    const controller = new AbortController();
+
+    fetchBusinessServices(selectedBusinessId, { signal: controller.signal });
+
+    return () => {
+      controller.abort();
+    };
+  }, [selectedBusinessId]);
+
   const isFormDisabled =
     !hasOwnerBusinesses ||
     !hasCustomers ||
@@ -452,6 +550,16 @@ function OwnerWorkOrdersPanel({ onBack }) {
       </label>
     );
   }, [hasOwnerBusinesses, ownerBusinesses, selectedBusinessId]);
+
+  const activeServiceIds = useMemo(
+    () => new Set(businessServices.map((item) => item.service_id)),
+    [businessServices]
+  );
+
+  const availableServices = useMemo(
+    () => serviceCatalog.filter((svc) => !activeServiceIds.has(svc.id)),
+    [serviceCatalog, activeServiceIds]
+  );
 
   async function handleCreateWorkOrder(event) {
     event.preventDefault();
@@ -612,6 +720,203 @@ function OwnerWorkOrdersPanel({ onBack }) {
         ...prev,
         [workOrderId]: false,
       }));
+    }
+  }
+
+  async function handleAddService(event) {
+    event.preventDefault();
+
+    setServicesError('');
+    setServicesSuccess('');
+
+    const token = tokenRef.current;
+    if (!token) {
+      setServicesError('İşlem yapmak için giriş yapmalısınız.');
+      return;
+    }
+
+    const businessId = Number(selectedBusinessId);
+    if (!businessId) {
+      setServicesError('Lütfen bir işletme seçin.');
+      return;
+    }
+
+    const serviceId = Number(selectedServiceId);
+    if (!serviceId) {
+      setServicesError('Lütfen bir hizmet seçin.');
+      return;
+    }
+
+    const numericPrice = Number(newMinimumPrice);
+    if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+      setServicesError('Minimum fiyat sıfırdan büyük olmalıdır.');
+      return;
+    }
+
+    try {
+      setServiceSubmitting(true);
+
+      const response = await fetch(`${API_BASE_URL}/businesses/${businessId}/services`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          service_id: serviceId,
+          minimum_price: numericPrice,
+        }),
+      });
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          setServicesError('Bu hizmet işletmeye zaten eklenmiş.');
+        } else if (response.status === 422) {
+          setServicesError('Lütfen hizmet ve minimum fiyat bilgilerini kontrol edin.');
+        } else {
+          setServicesError(
+            getErrorMessage(
+              response.status,
+              payload,
+              'Hizmet eklenirken bir hata oluştu.'
+            )
+          );
+        }
+        return;
+      }
+
+      setServicesSuccess('Hizmet başarıyla eklendi.');
+      setSelectedServiceId('');
+      setNewMinimumPrice('');
+      await fetchBusinessServices(businessId);
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setServicesError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+    } finally {
+      setServiceSubmitting(false);
+    }
+  }
+
+  async function handleUpdateServicePrice(serviceId) {
+    setServicesError('');
+    setServicesSuccess('');
+
+    const token = tokenRef.current;
+    if (!token) {
+      setServicesError('İşlem yapmak için giriş yapmalısınız.');
+      return;
+    }
+
+    const businessId = Number(selectedBusinessId);
+    if (!businessId) {
+      return;
+    }
+
+    const rawPrice = priceEditMap[serviceId];
+    const numericPrice = Number(rawPrice);
+    if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+      setServicesError('Yeni fiyat sıfırdan büyük olmalıdır.');
+      return;
+    }
+
+    try {
+      setUpdatingServiceId(serviceId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/businesses/${businessId}/services/${serviceId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ minimum_price: numericPrice }),
+        }
+      );
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        if (response.status === 422) {
+          setServicesError('Lütfen hizmet ve minimum fiyat bilgilerini kontrol edin.');
+        } else {
+          setServicesError(
+            getErrorMessage(
+              response.status,
+              payload,
+              'Fiyat güncellenirken bir hata oluştu.'
+            )
+          );
+        }
+        return;
+      }
+
+      setServicesSuccess('Minimum başlangıç fiyatı güncellendi.');
+      await fetchBusinessServices(businessId);
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setServicesError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  }
+
+  async function handleDeactivateService(serviceId) {
+    setServicesError('');
+    setServicesSuccess('');
+
+    const token = tokenRef.current;
+    if (!token) {
+      setServicesError('İşlem yapmak için giriş yapmalısınız.');
+      return;
+    }
+
+    const businessId = Number(selectedBusinessId);
+    if (!businessId) {
+      return;
+    }
+
+    try {
+      setDeletingServiceId(serviceId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/businesses/${businessId}/services/${serviceId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const payload = await safeJson(response);
+
+      if (!response.ok) {
+        setServicesError(
+          getErrorMessage(
+            response.status,
+            payload,
+            'Hizmet pasifleştirilirken bir hata oluştu.'
+          )
+        );
+        return;
+      }
+
+      setServicesSuccess('Hizmet pasifleştirildi.');
+      await fetchBusinessServices(businessId);
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      setServicesError('Backend bağlantısı kurulamadı. Lütfen sunucunun çalıştığından emin olun.');
+    } finally {
+      setDeletingServiceId(null);
     }
   }
 
@@ -824,6 +1129,158 @@ function OwnerWorkOrdersPanel({ onBack }) {
               );
             })}
           </div>
+        )}
+      </div>
+
+      <div className="owner-panel-section service-management-section">
+        <h3>Hizmet ve Başlangıç Fiyatları</h3>
+        <p className="owner-helper-text">
+          İşletmenizin sunduğu hizmetleri ve araç durumuna göre artabilecek minimum başlangıç fiyatlarını yönetin.
+        </p>
+
+        {!hasOwnerBusinesses && (
+          <p className="ui-error">Hesabınıza bağlı bir işletme bulunmuyor.</p>
+        )}
+
+        {hasOwnerBusinesses && !selectedBusinessId && (
+          <p className="owner-helper-text">Hizmetleri yönetmek için yukarıdan bir işletme seçin.</p>
+        )}
+
+        {hasOwnerBusinesses && selectedBusinessId && (
+          <>
+            {servicesLoading && <p>Hizmet bilgileri yükleniyor...</p>}
+
+            {servicesError && (
+              <p className="ui-error service-status-message">{servicesError}</p>
+            )}
+            {servicesSuccess && (
+              <p className="ui-success service-status-message">{servicesSuccess}</p>
+            )}
+
+            {!servicesLoading && (
+              <>
+                <form className="service-add-form" onSubmit={handleAddService}>
+                  <label>
+                    Hizmet
+                    {availableServices.length === 0 ? (
+                      <p className="owner-helper-text">
+                        Tüm aktif hizmetler bu işletmeye eklenmiş.
+                      </p>
+                    ) : (
+                      <select
+                        value={selectedServiceId}
+                        onChange={(event) => {
+                          setSelectedServiceId(event.target.value);
+                          setServicesError('');
+                          setServicesSuccess('');
+                        }}
+                        disabled={serviceSubmitting}
+                      >
+                        <option value="">Hizmet Seçin</option>
+                        {availableServices.map((svc) => (
+                          <option key={svc.id} value={svc.id}>
+                            {svc.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </label>
+
+                  <label>
+                    Minimum Başlangıç Fiyatı (₺)
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={newMinimumPrice}
+                      onChange={(event) => setNewMinimumPrice(event.target.value)}
+                      placeholder="0.00"
+                      disabled={serviceSubmitting || availableServices.length === 0}
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={
+                      serviceSubmitting ||
+                      availableServices.length === 0 ||
+                      !selectedServiceId ||
+                      !newMinimumPrice
+                    }
+                  >
+                    {serviceSubmitting ? 'Ekleniyor...' : 'Hizmet Ekle'}
+                  </button>
+                </form>
+
+                {businessServices.length === 0 && (
+                  <p className="owner-helper-text">
+                    Bu işletmeye henüz hizmet eklenmemiş.
+                  </p>
+                )}
+
+                {businessServices.length > 0 && (
+                  <div className="service-management-list">
+                    {businessServices.map((item) => {
+                      const isUpdating = updatingServiceId === item.service_id;
+                      const isDeleting = deletingServiceId === item.service_id;
+                      const isDisabled = isUpdating || isDeleting;
+
+                      return (
+                        <article key={item.service_id} className="service-management-card">
+                          <h4>{normalizeText(item.service_name)}</h4>
+                          {item.service_description && (
+                            <p className="owner-helper-text">{item.service_description}</p>
+                          )}
+                          <p>
+                            <strong>Güncel minimum fiyat:</strong>{' '}
+                            {formatCurrency(item.minimum_price)}
+                          </p>
+                          <p className="owner-helper-text">
+                            Bu tutar minimum başlangıç fiyatıdır. Araç modeli, arıza ve parça
+                            ihtiyacına göre gerçek ücret artabilir.
+                          </p>
+
+                          <div className="service-price-actions">
+                            <input
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              value={priceEditMap[item.service_id] ?? ''}
+                              onChange={(event) => {
+                                const val = event.target.value;
+                                setPriceEditMap((prev) => ({
+                                  ...prev,
+                                  [item.service_id]: val,
+                                }));
+                              }}
+                              disabled={isDisabled}
+                              aria-label={`${item.service_name} yeni fiyatı`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateServicePrice(item.service_id)}
+                              disabled={isDisabled}
+                            >
+                              {isUpdating ? 'Güncelleniyor...' : 'Fiyatı Güncelle'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivateService(item.service_id)}
+                              disabled={isDisabled}
+                            >
+                              {isDeleting ? 'Pasifleştiriliyor...' : 'Hizmeti Pasifleştir'}
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
     </section>

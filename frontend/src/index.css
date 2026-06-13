@@ -226,3 +226,67 @@ div {
 .owner-status-editor select {
   min-width: 220px;
 }
+
+.service-management-section {
+}
+
+.service-add-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.service-add-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.service-add-form input,
+.service-add-form select {
+  padding: 10px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.service-management-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 0;
+}
+
+.service-management-card {
+  background-color: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.service-management-card h4 {
+  margin-top: 0;
+}
+
+.service-price-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0;
+}
+
+.service-price-actions input {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.service-status-message {
+  margin-bottom: 12px;
+}
