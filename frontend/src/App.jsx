@@ -3,43 +3,82 @@ import BusinessList from './components/BusinessList.jsx';
 import BusinessDetail from './components/BusinessDetail.jsx';
 import CustomerWorkOrders from './components/CustomerWorkOrders.jsx';
 import OwnerWorkOrdersPanel from './components/OwnerWorkOrdersPanel.jsx';
+import LoginPanel from './components/LoginPanel.jsx';
 
 function App() {
   const [selectedBusinessId, setSelectedBusinessId] = useState(null);
   const [activeScreen, setActiveScreen] = useState('business-list');
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(localStorage.getItem('access_token')));
+
+  const handleLoginSuccess = (targetScreen = 'business-list') => {
+    setIsAuthenticated(true);
+    setSelectedBusinessId(null);
+    setActiveScreen(targetScreen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setIsAuthenticated(false);
+    setSelectedBusinessId(null);
+    setActiveScreen('business-list');
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPanel onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Dijital Otosanayi</h1>
-      {selectedBusinessId ? (
-        <BusinessDetail businessId={selectedBusinessId} onBack={() => setSelectedBusinessId(null)} />
-      ) : activeScreen === 'customer-workorders' ? (
-        <CustomerWorkOrders onBack={() => setActiveScreen('business-list')} />
-      ) : activeScreen === 'owner-workorders' ? (
-        <OwnerWorkOrdersPanel onBack={() => setActiveScreen('business-list')} />
-      ) : (
-        <>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            <button
-              onClick={() => {
-                setSelectedBusinessId(null);
-                setActiveScreen('customer-workorders');
-              }}
-            >
-              İş Emirlerim
-            </button>
-            <button
-              onClick={() => {
-                setSelectedBusinessId(null);
-                setActiveScreen('owner-workorders');
-              }}
-            >
-              İşletme Sahibi Paneli
-            </button>
-          </div>
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="app-brand">Dijital Otosanayi</div>
+        <nav className="app-nav">
+          <button
+            type="button"
+            className={activeScreen === 'business-list' && !selectedBusinessId ? 'active' : ''}
+            onClick={() => {
+              setSelectedBusinessId(null);
+              setActiveScreen('business-list');
+            }}
+          >
+            Isletmeler
+          </button>
+          <button
+            type="button"
+            className={activeScreen === 'customer-workorders' ? 'active' : ''}
+            onClick={() => {
+              setSelectedBusinessId(null);
+              setActiveScreen('customer-workorders');
+            }}
+          >
+            Is Emirlerim
+          </button>
+          <button
+            type="button"
+            className={activeScreen === 'owner-workorders' ? 'active' : ''}
+            onClick={() => {
+              setSelectedBusinessId(null);
+              setActiveScreen('owner-workorders');
+            }}
+          >
+            Isletme Sahibi Paneli
+          </button>
+        </nav>
+        <button type="button" className="logout-button" onClick={handleLogout}>
+          Cikis Yap
+        </button>
+      </header>
+
+      <main className="app-content">
+        {selectedBusinessId ? (
+          <BusinessDetail businessId={selectedBusinessId} onBack={() => setSelectedBusinessId(null)} />
+        ) : activeScreen === 'customer-workorders' ? (
+          <CustomerWorkOrders onBack={() => setActiveScreen('business-list')} />
+        ) : activeScreen === 'owner-workorders' ? (
+          <OwnerWorkOrdersPanel onBack={() => setActiveScreen('business-list')} />
+        ) : (
           <BusinessList onSelectBusiness={setSelectedBusinessId} />
-        </>
-      )}
+        )}
+      </main>
     </div>
   );
 }
