@@ -40,7 +40,7 @@ function App() {
               setActiveScreen('business-list');
             }}
           >
-            Isletmeler
+            İşletmeler
           </button>
           <button
             type="button"
@@ -50,7 +50,7 @@ function App() {
               setActiveScreen('customer-workorders');
             }}
           >
-            Is Emirlerim
+            İş Emirlerim
           </button>
           <button
             type="button"
@@ -60,11 +60,11 @@ function App() {
               setActiveScreen('owner-workorders');
             }}
           >
-            Isletme Sahibi Paneli
+            İşletme Sahibi Paneli
           </button>
         </nav>
         <button type="button" className="logout-button" onClick={handleLogout}>
-          Cikis Yap
+          Çıkış Yap
         </button>
       </header>
 

@@ -1086,7 +1086,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
                 <article key={workOrder.id} className="owner-workorder-card">
                   <h4>İş Emri #{normalizeText(workOrder.id)}</h4>
                   <p><strong>Müşteri:</strong> {normalizeText(workOrder.customer_name)}</p>
-                  <p><strong>Müşteri Email:</strong> {normalizeText(workOrder.customer_email)}</p>
+                  <p><strong>Müşteri E-posta:</strong> {normalizeText(workOrder.customer_email)}</p>
                   <p><strong>Araç Plakası:</strong> {normalizeText(workOrder.vehicle_plate)}</p>
                   <p>
                     <strong>Araç:</strong>{' '}

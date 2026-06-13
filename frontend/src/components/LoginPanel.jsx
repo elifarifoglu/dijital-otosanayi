@@ -45,15 +45,15 @@ function LoginPanel({ onLoginSuccess }) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          setErrorMessage('E-posta veya sifre hatali. Lutfen bilgilerinizi kontrol edin.');
+          setErrorMessage('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
         } else if (response.status >= 500) {
-          setErrorMessage('Sunucu hatasi olustu. Lutfen daha sonra tekrar deneyin.');
+          setErrorMessage('Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.');
         } else {
           const detail = payload?.detail;
           if (typeof detail === 'string' && detail.trim()) {
             setErrorMessage(detail);
           } else {
-            setErrorMessage('Giris yapilirken bir hata olustu. Lutfen tekrar deneyin.');
+            setErrorMessage('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
           }
         }
         return;
@@ -61,14 +61,14 @@ function LoginPanel({ onLoginSuccess }) {
 
       const accessToken = payload?.access_token;
       if (!accessToken || typeof accessToken !== 'string') {
-        setErrorMessage('Giris basarili fakat token bilgisi alinamadi.');
+        setErrorMessage('Giriş başarılı fakat token bilgisi alınamadı.');
         return;
       }
 
       localStorage.setItem('access_token', accessToken);
       onLoginSuccess(targetScreen);
     } catch (error) {
-      setErrorMessage('Backend baglantisi kurulamadi. Sunucunun calistigindan emin olun.');
+      setErrorMessage('Backend bağlantısı kurulamadı. Sunucunun çalıştığından emin olun.');
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ function LoginPanel({ onLoginSuccess }) {
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
-      setErrorMessage('Lutfen e-posta ve sifre alanlarini doldurun.');
+      setErrorMessage('Lütfen e-posta ve şifre alanlarını doldurun.');
       return;
     }
 
@@ -110,7 +110,7 @@ function LoginPanel({ onLoginSuccess }) {
     <section className="login-page">
       <div className="login-card">
         <h1>Dijital Otosanayi</h1>
-        <p className="login-subtitle">Demo ortami icin giris yapin.</p>
+        <p className="login-subtitle">Demo ortamı için giriş yapın.</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>
@@ -126,7 +126,7 @@ function LoginPanel({ onLoginSuccess }) {
           </label>
 
           <label>
-            Sifre
+            Şifre
             <input
               type="password"
               value={password}
@@ -140,24 +140,25 @@ function LoginPanel({ onLoginSuccess }) {
           {errorMessage && <p className="ui-error">{errorMessage}</p>}
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Giris yapiliyor...' : 'Giris Yap'}
+            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
         </form>
 
+        <p className="login-demo-title">Hızlı demo girişi</p>
         <div className="login-demo-actions">
           <button
             type="button"
             onClick={() => handleDemoLogin('customer')}
             disabled={loading}
           >
-            {loading ? 'Isleniyor...' : 'Customer Demo'}
+            {loading ? 'İşleniyor...' : 'Müşteri Demo Girişi'}
           </button>
           <button
             type="button"
             onClick={() => handleDemoLogin('owner')}
             disabled={loading}
           >
-            {loading ? 'Isleniyor...' : 'Owner Demo'}
+            {loading ? 'İşleniyor...' : 'İşletme Sahibi Demo Girişi'}
           </button>
         </div>
       </div>

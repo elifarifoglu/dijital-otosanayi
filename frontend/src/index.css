@@ -64,9 +64,10 @@ div {
 }
 
 .app-nav button.active {
-  border-color: #2563eb;
-  color: #1d4ed8;
-  background-color: #eff6ff;
+  border-color: #1d4ed8;
+  color: #1e40af;
+  background-color: #dbeafe;
+  box-shadow: inset 0 0 0 1px rgba(29, 78, 216, 0.25);
 }
 
 .app-nav button:disabled,
@@ -78,14 +79,15 @@ div {
 }
 
 .logout-button {
-  border-color: #fecaca;
-  color: #b91c1c;
-  background-color: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+  background-color: #fee2e2;
+  font-weight: 600;
 }
 
 .logout-button:hover {
-  border-color: #fca5a5;
-  background-color: #fee2e2;
+  border-color: #ef4444;
+  background-color: #fecaca;
 }
 
 .app-content {
@@ -118,6 +120,13 @@ div {
 
 .login-subtitle {
   margin-top: 0;
+  color: #4b5563;
+}
+
+.login-demo-title {
+  margin: 12px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
   color: #4b5563;
 }
 
@@ -223,6 +232,10 @@ div {
 
 .ui-error {
   color: #b42318;
+  background-color: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+  padding: 10px 12px;
   margin: 0;
 }
 

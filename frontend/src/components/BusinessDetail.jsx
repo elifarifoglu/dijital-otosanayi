@@ -250,7 +250,7 @@ function BusinessDetail({ businessId, onBack }) {
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      setSubmitError('Yorum göndermek için giriş yapılmış token gerekli (localStorage: access_token).');
+      setSubmitError('Yorum göndermek için giriş yapmalısınız.');
       return;
     }
 
