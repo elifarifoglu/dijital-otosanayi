@@ -14,10 +14,11 @@ class BusinessResponse(BaseModel):
     address: str
     phone: Optional[str] = None
     created_at: datetime
+    average_rating: Optional[float] = None
+    review_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class BusinessDetailResponse(BusinessResponse):
-    average_rating: Optional[float] = None
-    review_count: int = 0
+    pass

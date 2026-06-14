@@ -20,8 +20,40 @@ def list_businesses(db: Session = Depends(get_db)):
     """
     Sistemde kayıtlı işletmeleri listeler.
     """
-    businesses = db.query(Business).all()
-    return businesses
+    review_stats_subquery = (
+        db.query(
+            Review.business_id.label("business_id"),
+            func.avg(Review.rating).label("average_rating"),
+            func.count(Review.id).label("review_count"),
+        )
+        .group_by(Review.business_id)
+        .subquery()
+    )
+
+    businesses_with_stats = (
+        db.query(
+            Business,
+            review_stats_subquery.c.average_rating,
+            review_stats_subquery.c.review_count,
+        )
+        .outerjoin(review_stats_subquery, review_stats_subquery.c.business_id == Business.id)
+        .all()
+    )
+
+    return [
+        {
+            "id": business.id,
+            "owner_id": business.owner_id,
+            "name": business.name,
+            "description": business.description,
+            "address": business.address,
+            "phone": business.phone,
+            "created_at": business.created_at,
+            "average_rating": float(average_rating) if average_rating is not None else None,
+            "review_count": int(review_count or 0),
+        }
+        for business, average_rating, review_count in businesses_with_stats
+    ]
 
 
 @router.get("/{business_id}", response_model=BusinessDetailResponse)
