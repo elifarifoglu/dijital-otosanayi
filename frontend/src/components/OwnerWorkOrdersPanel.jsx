@@ -53,7 +53,13 @@ function formatDate(value) {
     return 'Belirtilmemiş';
   }
 
-  return parsedDate.toLocaleString('tr-TR');
+  return parsedDate.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function getStatusLabel(statusValue) {
@@ -678,6 +684,16 @@ function OwnerWorkOrdersPanel({ onBack }) {
       return;
     }
 
+    const currentWorkOrder = workOrders.find((item) => item.id === workOrderId);
+    const currentStatus = (currentWorkOrder?.status || '').toString().trim().toLowerCase();
+    const normalizedNextStatus = (nextStatus || '').toString().trim().toLowerCase();
+
+    if (currentStatus && currentStatus === normalizedNextStatus) {
+      setStatusSuccess('');
+      setStatusError('Yeni durum, mevcut durumdan farklı olmalıdır.');
+      return;
+    }
+
     try {
       setStatusUpdatingMap((prev) => ({
         ...prev,
@@ -821,6 +837,20 @@ function OwnerWorkOrdersPanel({ onBack }) {
     if (Number.isNaN(numericPrice) || numericPrice <= 0) {
       setServicesError('Yeni fiyat sıfırdan büyük olmalıdır.');
       return;
+    }
+
+    const targetService = businessServices.find((item) => item.service_id === serviceId);
+    const currentMinimumPrice = Number(targetService?.minimum_price);
+
+    if (!Number.isNaN(currentMinimumPrice)) {
+      const nextPriceInCents = Math.round(numericPrice * 100);
+      const currentPriceInCents = Math.round(currentMinimumPrice * 100);
+
+      if (nextPriceInCents === currentPriceInCents) {
+        setServicesSuccess('');
+        setServicesError('Yeni minimum fiyat, mevcut fiyattan farklı olmalıdır.');
+        return;
+      }
     }
 
     try {

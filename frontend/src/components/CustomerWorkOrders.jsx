@@ -47,7 +47,13 @@ function formatDate(value) {
     return 'Belirtilmemiş';
   }
 
-  return parsedDate.toLocaleString('tr-TR');
+  return parsedDate.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function normalizeText(value) {

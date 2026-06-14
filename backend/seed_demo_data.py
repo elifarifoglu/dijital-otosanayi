@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Iterable
 
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from passlib.context import CryptContext
 from app.db import SessionLocal
@@ -149,39 +150,112 @@ def upsert_vehicle(
     return vehicle, "created"
 
 
-def choose_services(db: Session) -> list[Service]:
-    desired_names = [
-        "Periyodik Bakım",
-        "Fren Balata Değişimi",
-        "Motor Arıza Tespiti",
+SERVICE_CATALOG_TARGETS: list[tuple[str, str]] = [
+    ("Yağ Değişimi", "Motor yağı ve yağ filtresinin üretici standartlarına uygun yenilenmesi."),
+    ("Fren Bakımı", "Balata, disk ve fren hidrolik sistemi kontrolü ile gerekli bakım işlemleri."),
+    ("Periyodik Bakım", "Kilometre ve araç yaşına uygun periyodik bakım paketi."),
+    ("Akü Kontrolü", "Akü sağlık testi, şarj sistemi kontrolü ve kutup başı temizliği."),
+    ("Lastik Değişimi", "Mevsime uygun lastik sökme-takma ve hava basıncı kontrolü."),
+    ("Rot Balans", "Ön düzen geometrisi kontrolü ve balans ayar işlemleri."),
+    ("Motor Arıza Tespiti", "OBD cihazı ile arıza kodu okuma ve temel motor diagnostik kontrolü."),
+]
+
+SERVICE_MINIMUM_PRICES: dict[str, Decimal] = {
+    "Yağ Değişimi": Decimal("1800"),
+    "Fren Bakımı": Decimal("2500"),
+    "Periyodik Bakım": Decimal("3500"),
+    "Akü Kontrolü": Decimal("900"),
+    "Lastik Değişimi": Decimal("1200"),
+    "Rot Balans": Decimal("1500"),
+    "Motor Arıza Tespiti": Decimal("1000"),
+}
+
+
+def ensure_service_catalog(db: Session) -> list[Service]:
+    ensured: list[Service] = []
+
+    for name, description in SERVICE_CATALOG_TARGETS:
+        service = db.query(Service).filter(Service.name == name).first()
+
+        if service:
+            changed = False
+            if service.description != description:
+                service.description = description
+                changed = True
+            if not service.is_active:
+                service.is_active = True
+                changed = True
+            print_action("Servis", "updated" if changed else "reused", name)
+        else:
+            service = Service(
+                name=name,
+                description=description,
+                is_active=True,
+            )
+            db.add(service)
+            db.flush()
+            print_action("Servis", "created", name)
+
+        ensured.append(service)
+
+    return ensured
+
+
+def cleanup_demo_scope(
+    db: Session,
+    *,
+    demo_customer_id: int,
+    demo_business_id: int,
+) -> None:
+    workorder_ids = [
+        row[0]
+        for row in (
+            db.query(WorkOrder.id)
+            .filter(
+                or_(
+                    WorkOrder.business_id == demo_business_id,
+                    WorkOrder.customer_id == demo_customer_id,
+                )
+            )
+            .all()
+        )
     ]
 
-    active_services = (
-        db.query(Service)
-        .filter(Service.is_active.is_(True))
-        .order_by(Service.id.asc())
-        .all()
+    review_query = db.query(Review).filter(
+        or_(
+            Review.business_id == demo_business_id,
+            Review.customer_id == demo_customer_id,
+            Review.workorder_id.in_(workorder_ids) if workorder_ids else False,
+        )
     )
-    if not active_services:
-        raise RuntimeError("Aktif servis bulunamadı. Önce migration/seeding servis verisini doğrulayın.")
+    deleted_reviews = review_query.delete(synchronize_session=False)
+    log(f"Temizlik(reviews): {deleted_reviews} kayıt silindi.")
 
-    active_by_name = {service.name: service for service in active_services}
+    deleted_workorders = (
+        db.query(WorkOrder)
+        .filter(
+            or_(
+                WorkOrder.business_id == demo_business_id,
+                WorkOrder.customer_id == demo_customer_id,
+            )
+        )
+        .delete(synchronize_session=False)
+    )
+    log(f"Temizlik(workorders): {deleted_workorders} kayıt silindi.")
 
-    if all(name in active_by_name for name in desired_names):
-        selected = [active_by_name[name] for name in desired_names]
-        log("İstenen servis adları birebir bulundu, bunlar kullanılacak.")
-        return selected
+    deleted_business_services = (
+        db.query(BusinessService)
+        .filter(BusinessService.business_id == demo_business_id)
+        .delete(synchronize_session=False)
+    )
+    log(f"Temizlik(business_services): {deleted_business_services} kayıt silindi.")
 
-    log("İstenen servis adları birebir bulunamadı. Aktif servisler:")
-    for service in active_services:
-        log(f"- {service.name}")
-
-    selected = active_services[:3]
-    if len(selected) < 3:
-        raise RuntimeError("En az 3 aktif servis gerekli.")
-
-    log("İlk 3 aktif servis fallback olarak kullanılacak.")
-    return selected
+    deleted_vehicles = (
+        db.query(Vehicle)
+        .filter(Vehicle.owner_id == demo_customer_id)
+        .delete(synchronize_session=False)
+    )
+    log(f"Temizlik(vehicles): {deleted_vehicles} kayıt silindi.")
 
 
 def upsert_business_service(
@@ -370,13 +444,19 @@ def seed_demo_data() -> None:
             owner_id=owner.id,
             name="Çanakkale Oto Servis",
             description=(
-                "Periyodik bakım, fren sistemi, motor arıza tespiti ve teslim süreci takibi "
-                "sunan yerel oto servis işletmesi."
+                "Periyodik bakım, fren ve motor sistemleri için güvenilir bakım-onarım hizmeti "
+                "sunan, süreç takibini dijital ortamdan görünür kılan yerel oto servis işletmesi."
             ),
             address="Küçük Sanayi Sitesi, Çanakkale",
             phone="0286 000 00 00",
         )
         print_action("İşletme", action, business.name)
+
+        cleanup_demo_scope(
+            db,
+            demo_customer_id=customer.id,
+            demo_business_id=business.id,
+        )
 
         vehicle, action = upsert_vehicle(
             db,
@@ -388,10 +468,23 @@ def seed_demo_data() -> None:
         )
         print_action("Araç", action, vehicle.plate)
 
-        selected_services = choose_services(db)
+        selected_services = ensure_service_catalog(db)
 
-        target_prices = [Decimal("2200"), Decimal("1700"), Decimal("1000")]
-        for service, min_price in zip(selected_services, target_prices):
+        selected_services_by_name = {service.name: service for service in selected_services}
+
+        missing_price_services = [
+            service_name
+            for service_name in selected_services_by_name
+            if service_name not in SERVICE_MINIMUM_PRICES
+        ]
+        if missing_price_services:
+            raise RuntimeError(
+                "Minimum fiyatı tanımlanmamış servisler bulundu: "
+                + ", ".join(missing_price_services)
+            )
+
+        for service_name, min_price in SERVICE_MINIMUM_PRICES.items():
+            service = selected_services_by_name[service_name]
             _, action = upsert_business_service(
                 db,
                 business_id=business.id,
@@ -400,40 +493,54 @@ def seed_demo_data() -> None:
             )
             print_action("BusinessService", action, f"{business.name} / {service.name}")
 
-        service_name_1 = selected_services[0].name
-        service_name_2 = selected_services[1].name
-        service_name_3 = selected_services[2].name
-
         workorder_specs = [
             {
-                "service_type": service_name_1,
-                "estimated_price": Decimal("2500"),
+                "service_type": "Periyodik Bakım",
+                "estimated_price": Decimal("4100"),
                 "status": WorkOrderStatus.delivered,
-                "description": "Periyodik bakım işlemi tamamlandı ve araç teslim edildi.",
+                "description": "Periyodik bakım tamamlandı, filtre ve sıvı kontrolleri sonrası araç teslim edildi.",
             },
             {
-                "service_type": service_name_1,
-                "estimated_price": Decimal("2800"),
+                "service_type": "Fren Bakımı",
+                "estimated_price": Decimal("3200"),
                 "status": WorkOrderStatus.delivered,
-                "description": "Periyodik bakım kapsamında filtre ve sıvı kontrolleri yapıldı.",
+                "description": "Fren balata ve disk kontrolleri yapıldı, gerekli değişimler sonrası araç teslim edildi.",
             },
             {
-                "service_type": service_name_2,
-                "estimated_price": Decimal("1800"),
+                "service_type": "Yağ Değişimi",
+                "estimated_price": Decimal("1900"),
+                "status": WorkOrderStatus.delivered,
+                "description": "Yağ değişimi ve genel güvenlik kontrolü tamamlandı, araç teslim edildi.",
+            },
+            {
+                "service_type": "Rot Balans",
+                "estimated_price": Decimal("1700"),
+                "status": WorkOrderStatus.delivered,
+                "description": "Rot ayarı ve balans işlemleri tamamlandı, test sürüşü sonrası teslim edildi.",
+            },
+            {
+                "service_type": "Lastik Değişimi",
+                "estimated_price": Decimal("1400"),
                 "status": WorkOrderStatus.ready_for_delivery,
-                "description": "Fren sistemi parçaları değiştirildi, teslime hazır.",
+                "description": "Mevsim lastiği değişimi tamamlandı, araç son kontrol sonrası teslime hazır.",
             },
             {
-                "service_type": service_name_3,
-                "estimated_price": Decimal("1200"),
+                "service_type": "Motor Arıza Tespiti",
+                "estimated_price": Decimal("1300"),
                 "status": WorkOrderStatus.repair,
-                "description": "Motor arıza tespiti sonrası onarım süreci devam ediyor.",
+                "description": "Arıza kodu analiz edildi, parça temini sonrası onarım süreci devam ediyor.",
             },
             {
-                "service_type": "Genel Kontrol",
-                "estimated_price": Decimal("900"),
+                "service_type": "Akü Kontrolü",
+                "estimated_price": Decimal("950"),
+                "status": WorkOrderStatus.inspection,
+                "description": "Akü şarj-deşarj ölçümleri ve alternatör kontrolü için inceleme aşamasında.",
+            },
+            {
+                "service_type": "Periyodik Bakım",
+                "estimated_price": Decimal("3600"),
                 "status": WorkOrderStatus.received,
-                "description": "Genel kontrol için araç kabul edildi.",
+                "description": "Yeni periyodik bakım kaydı açıldı, araç kabulü yapıldı.",
             },
         ]
 
@@ -456,17 +563,33 @@ def seed_demo_data() -> None:
                 f"{workorder.service_type} / {workorder.estimated_price} / {workorder.status.value}",
             )
 
-        # En az 2 yorum: farklı iş emri, müşteri-işletme eşleşmesi tutarlı.
+        delivered_workorders = [
+            wo for wo in created_or_existing_workorders if wo.status == WorkOrderStatus.delivered
+        ]
+
+        if len(delivered_workorders) < 4:
+            raise RuntimeError("Yorumlar için en az 4 delivered iş emri oluşturulamadı.")
+
         review_targets: Iterable[tuple[WorkOrder, int, str]] = [
             (
-                created_or_existing_workorders[0],
-                5,
-                "Aracımın bakım süreci düzenli şekilde takip edilebildi.",
+                delivered_workorders[0],
+                4,
+                "Periyodik bakım için gittim. İşlem süreci sistemden düzenli takip edilebildi, araç teslimi zamanında yapıldı.",
             ),
             (
-                created_or_existing_workorders[1],
+                delivered_workorders[1],
+                5,
+                "Fren balataları değiştirildi. İşlem öncesi tahmini fiyat ve durum bilgisi netti.",
+            ),
+            (
+                delivered_workorders[2],
+                5,
+                "Yağ değişimi ve genel kontrol için hizmet aldım. Aracın hangi aşamada olduğunu görebilmek güven verdi.",
+            ),
+            (
+                delivered_workorders[3],
                 4,
-                "Fiyat bilgisi ve işlem durumu açık şekilde gösterildi.",
+                "Rot balans işlemi beklediğimden hızlı tamamlandı. Teslim süreci ve bilgilendirme yeterliydi.",
             ),
         ]
 
