@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure backend root is on Python import path for alembic runtime
+# Alembic çalışma zamanında backend kök dizinini Python import yoluna ekle
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.append(str(ROOT))
