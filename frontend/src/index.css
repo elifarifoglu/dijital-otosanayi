@@ -378,126 +378,93 @@ div {
 }
 
 .customer-workorders-header {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
-.customer-workorders-header h2 {
+.customer-workorders-title-block {
+  padding: 0;
+}
+
+.customer-workorders-title-block h2 {
   margin: 0 0 6px;
 }
 
-.customer-workorders-header p {
+.customer-workorders-title-block p {
   margin: 0;
   color: #4b5563;
 }
 
-.workorder-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 16px;
+.customer-workorders-back-button {
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  color: #374151;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
 }
 
-.workorder-card-wrapper {
-  list-style: none;
+.customer-workorders-back-button:hover {
+  background-color: #f9fafb;
+}
+
+.workorder-list {
+  display: grid;
+  gap: 16px;
 }
 
 .workorder-card {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 16px;
+  display: grid;
+  gap: 12px;
 }
 
 .workorder-card h3 {
-  margin-top: 0;
-}
-
-.workorder-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.workorder-header h3 {
   margin: 0;
-  flex: 1;
 }
 
-.workorder-status-badge {
-  background-color: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.workorder-meta-primary {
+.workorder-meta {
+  padding: 0;
   display: grid;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
-.workorder-meta-primary p {
+.workorder-meta p {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  color: #1f2937;
 }
 
-.workorder-timeline-wrap {
-  background-color: #f9f9f9;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
-  margin: 12px 0;
-}
-
-.workorder-meta-secondary {
+.workorder-secondary-meta {
+  padding: 0;
   display: grid;
   gap: 6px;
+  border-top: 1px dashed #e5e7eb;
   padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
 }
 
-.workorder-meta-date {
+.workorder-secondary-meta p {
   margin: 0;
-  font-size: 13px;
   color: #6b7280;
-}
-
-.workorder-state-message {
-  margin-top: 14px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e3a8a;
-}
-
-.owner-state-message {
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e3a8a;
   font-size: 14px;
 }
 
+.workorder-timeline-wrap {
+  padding: 0;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
 .workorder-timeline-wrapper {
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .workorder-timeline {
@@ -559,7 +526,15 @@ div {
   max-width: 1080px;
 }
 
+.owner-workorders-page {
+  display: grid;
+  gap: 16px;
+}
+
 .owner-panel-header {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -567,11 +542,34 @@ div {
   flex-wrap: wrap;
 }
 
+.owner-panel-header-content {
+  padding: 0;
+}
+
+.owner-panel-header-content h2 {
+  margin: 0 0 6px;
+}
+
+.owner-panel-header-content p {
+  margin: 0;
+  color: #4b5563;
+}
+
 .owner-panel-section {
-  background-color: #f9f9f9;
-  border: 1px solid #e2e2e2;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 0;
+}
+
+.owner-section {
+  display: grid;
+  gap: 12px;
+}
+
+.owner-section-title {
+  margin: 0;
+  color: #111827;
 }
 
 .owner-form,
@@ -581,23 +579,17 @@ div {
 }
 
 .owner-form-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
 }
 
-.owner-form-grid label {
-  display: grid;
-  gap: 6px;
-  font-weight: 600;
-}
-
-.owner-form-grid input,
-.owner-form-grid select {
-  padding: 10px;
-  border: 1px solid #cfcfcf;
-  border-radius: 6px;
-  font-size: 14px;
+.owner-form-grid label,
+.owner-form-grid .owner-helper-text,
+.owner-form-grid .owner-inline-status,
+.owner-form-grid .ui-error,
+.owner-form-grid .ui-success,
+.owner-form-grid button {
+  grid-column: 1 / -1;
 }
 
 .owner-form label,
@@ -621,6 +613,20 @@ div {
   margin: 0;
 }
 
+.owner-inline-status {
+  margin: 0;
+  border: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #334155;
+}
+
+.ui-error.owner-inline-status,
+.ui-success.owner-inline-status {
+  border-width: 1px;
+}
+
 .owner-workorder-list {
   display: grid;
   gap: 12px;
@@ -630,34 +636,34 @@ div {
   background-color: #ffffff;
   border: 1px solid #ececec;
   border-radius: 8px;
+  display: grid;
+  gap: 8px;
 }
 
 .owner-workorder-card h4 {
-  margin-top: 0;
+  margin: 0;
+}
+
+.owner-workorder-card p {
+  margin: 0;
 }
 
 .owner-status-row,
-.owner-status-editor,
-.owner-action-row {
+.owner-status-editor {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #ececec;
 }
 
 .owner-status-row select,
-.owner-status-editor select,
-.owner-action-row select {
+.owner-status-editor select {
   min-width: 220px;
-  flex: 1;
 }
 
-.owner-status-row button,
-.owner-action-row button {
-  flex-shrink: 0;
+.owner-action-row {
+  padding: 0;
+  margin-top: 4px;
 }
 
 .service-management-section {
@@ -701,6 +707,10 @@ div {
   margin-top: 0;
 }
 
+.service-management-card p {
+  margin: 0;
+}
+
 .service-price-actions {
   display: flex;
   gap: 8px;
@@ -735,46 +745,41 @@ div {
     width: 100%;
   }
 
-  .customer-workorders-header,
-  .owner-panel-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .workorder-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .workorder-status-badge {
-    align-self: flex-start;
+  .customer-workorders-back-button,
+  .owner-panel-header button,
+  .owner-form button,
+  .owner-status-row button,
+  .service-add-form button,
+  .service-price-actions button {
+    width: 100%;
   }
 
   .owner-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .owner-action-row,
-  .owner-status-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .owner-action-row select,
+  .owner-form input,
+  .owner-form select,
+  .service-add-form input,
+  .service-add-form select,
   .owner-status-row select,
-  .owner-action-row button,
-  .owner-status-row button {
-    min-width: auto;
+  .service-price-actions input {
     width: 100%;
+    box-sizing: border-box;
   }
 
+  .owner-status-row,
   .service-price-actions {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .service-price-actions input,
-  .service-price-actions button {
+  .workorder-timeline {
+    gap: 6px;
+  }
+
+  .timeline-step {
     width: 100%;
+    justify-content: flex-start;
   }
 }

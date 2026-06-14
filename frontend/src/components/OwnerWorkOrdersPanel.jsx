@@ -922,80 +922,72 @@ function OwnerWorkOrdersPanel({ onBack }) {
 
   if (tokenMissing) {
     return (
-      <section className="owner-panel-page">
+      <section className="owner-panel-page owner-workorders-page">
         <div className="owner-panel-header">
-          <div>
-            <h2>İşletme Sahibi Paneli</h2>
-          </div>
-          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
         </div>
-        <p className="workorder-state-message">İşletme sahibi panelini görüntülemek için giriş yapmalısınız.</p>
+        <p className="owner-inline-status">İşletme sahibi panelini görüntülemek için giriş yapmalısınız.</p>
       </section>
     );
   }
 
   if (initialLoading) {
     return (
-      <section className="owner-panel-page">
+      <section className="owner-panel-page owner-workorders-page">
         <div className="owner-panel-header">
-          <div>
-            <h2>İşletme Sahibi Paneli</h2>
-          </div>
-          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
         </div>
-        <p className="workorder-state-message">Panel verileri yükleniyor...</p>
+        <p className="owner-inline-status">Panel verileri yükleniyor...</p>
       </section>
     );
   }
 
   if (authErrorMessage) {
     return (
-      <section className="owner-panel-page">
+      <section className="owner-panel-page owner-workorders-page">
         <div className="owner-panel-header">
-          <div>
-            <h2>İşletme Sahibi Paneli</h2>
-          </div>
-          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
         </div>
-        <p className="workorder-state-message ui-error">{authErrorMessage}</p>
+        <p className="ui-error owner-inline-status">{authErrorMessage}</p>
       </section>
     );
   }
 
   if (!isBusinessOwner) {
     return (
-      <section className="owner-panel-page">
+      <section className="owner-panel-page owner-workorders-page">
         <div className="owner-panel-header">
-          <div>
-            <h2>İşletme Sahibi Paneli</h2>
-          </div>
-          <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
+          <h2>İşletme Sahibi Paneli</h2>
+          <button onClick={onBack}>İşletmelere Geri Dön</button>
         </div>
-        <p className="workorder-state-message">Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.</p>
+        <p className="owner-inline-status">Bu alan yalnızca işletme sahibi hesapları tarafından kullanılabilir.</p>
       </section>
     );
   }
 
   return (
-    <section className="owner-panel-page">
+    <section className="owner-panel-page owner-workorders-page">
       <div className="owner-panel-header">
-        <div>
+        <div className="owner-panel-header-content">
           <h2>İşletme Sahibi Paneli</h2>
-          <p>İş emirleri oluşturun, durumlarını güncelleyin ve hizmetleri yönetin.</p>
+          <p>İş emri oluşturma, durum güncelleme ve hizmet fiyat yönetimini tek ekrandan yapabilirsiniz.</p>
         </div>
-        <button onClick={onBack} className="business-detail-back-button">İşletmelere Geri Dön</button>
+        <button onClick={onBack}>İşletmelere Geri Dön</button>
       </div>
 
-      <div className="owner-panel-section">
-        <h3>Yeni İş Emri Oluştur</h3>
+      <div className="owner-panel-section owner-section">
+        <h3 className="owner-section-title">Yeni İş Emri Oluştur</h3>
 
         {!hasOwnerBusinesses && (
-          <p className="ui-error">Hesabınıza bağlı bir işletme bulunmuyor.</p>
+          <p className="ui-error owner-inline-status">Hesabınıza bağlı bir işletme bulunmuyor.</p>
         )}
 
-        {customersLoading && <p>Müşteri seçenekleri yükleniyor...</p>}
+        {customersLoading && <p className="owner-inline-status">Müşteri seçenekleri yükleniyor...</p>}
         {!customersLoading && hasOwnerBusinesses && !hasCustomers && (
-          <p>İş emri oluşturulabilecek aktif müşteri bulunmuyor.</p>
+          <p className="owner-inline-status">İş emri oluşturulabilecek aktif müşteri bulunmuyor.</p>
         )}
 
         <form className="owner-form owner-form-grid" onSubmit={handleCreateWorkOrder}>
@@ -1035,10 +1027,10 @@ function OwnerWorkOrdersPanel({ onBack }) {
             </select>
           </label>
 
-          {vehiclesLoading && <p className="owner-state-message">Araç seçenekleri yükleniyor...</p>}
-          {vehiclesError && <p className="owner-state-message ui-error">{vehiclesError}</p>}
+          {vehiclesLoading && <p className="owner-inline-status">Araç seçenekleri yükleniyor...</p>}
+          {vehiclesError && <p className="ui-error owner-inline-status">{vehiclesError}</p>}
           {!vehiclesLoading && selectedCustomerId && !vehiclesError && !hasVehicles && (
-            <p className="owner-state-message">Bu müşteriye kayıtlı araç bulunmuyor.</p>
+            <p className="owner-inline-status">Bu müşteriye kayıtlı araç bulunmuyor.</p>
           )}
 
           {ownerBusinessSelection}
@@ -1066,8 +1058,8 @@ function OwnerWorkOrdersPanel({ onBack }) {
             />
           </label>
 
-          {formError && <p className="ui-error">{formError}</p>}
-          {formSuccess && <p className="ui-success">{formSuccess}</p>}
+          {formError && <p className="ui-error owner-inline-status">{formError}</p>}
+          {formSuccess && <p className="ui-success owner-inline-status">{formSuccess}</p>}
 
           <button type="submit" disabled={isFormDisabled}>
             {formSubmitting ? 'Oluşturuluyor...' : 'İş Emri Oluştur'}
@@ -1075,16 +1067,16 @@ function OwnerWorkOrdersPanel({ onBack }) {
         </form>
       </div>
 
-      <div className="owner-panel-section">
-        <h3>İş Emirleri</h3>
+      <div className="owner-panel-section owner-section">
+        <h3 className="owner-section-title">İş Emirleri</h3>
 
-        {workOrdersLoading && <p>İş emirleri yükleniyor...</p>}
-        {workOrdersError && <p className="ui-error">{workOrdersError}</p>}
-        {statusError && <p className="ui-error">{statusError}</p>}
-        {statusSuccess && <p className="ui-success">{statusSuccess}</p>}
+        {workOrdersLoading && <p className="owner-inline-status">İş emirleri yükleniyor...</p>}
+        {workOrdersError && <p className="ui-error owner-inline-status">{workOrdersError}</p>}
+        {statusError && <p className="ui-error owner-inline-status">{statusError}</p>}
+        {statusSuccess && <p className="ui-success owner-inline-status">{statusSuccess}</p>}
 
         {!workOrdersLoading && !workOrdersError && !hasWorkOrders && (
-          <p>İşletmenize ait henüz bir iş emri bulunmuyor.</p>
+          <p className="owner-inline-status">İşletmenize ait henüz bir iş emri bulunmuyor.</p>
         )}
 
         {!workOrdersLoading && !workOrdersError && hasWorkOrders && (
@@ -1109,7 +1101,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
                   <p><strong>Durum:</strong> {getStatusLabel(workOrder.status)}</p>
                   <p><strong>Oluşturulma Tarihi:</strong> {formatDate(workOrder.created_at)}</p>
 
-                  <div className="owner-action-row">
+                  <div className="owner-status-row owner-action-row">
                     <select
                       value={selectedStatus}
                       onChange={(event) => {
@@ -1143,29 +1135,29 @@ function OwnerWorkOrdersPanel({ onBack }) {
         )}
       </div>
 
-      <div className="owner-panel-section service-management-section">
-        <h3>Hizmet ve Başlangıç Fiyatları</h3>
-        <p className="owner-helper-text">
+      <div className="owner-panel-section owner-section service-management-section">
+        <h3 className="owner-section-title">Hizmet ve Başlangıç Fiyatları</h3>
+        <p className="owner-helper-text owner-inline-status">
           İşletmenizin sunduğu hizmetleri ve araç durumuna göre artabilecek minimum başlangıç fiyatlarını yönetin.
         </p>
 
         {!hasOwnerBusinesses && (
-          <p className="ui-error">Hesabınıza bağlı bir işletme bulunmuyor.</p>
+          <p className="ui-error owner-inline-status">Hesabınıza bağlı bir işletme bulunmuyor.</p>
         )}
 
         {hasOwnerBusinesses && !selectedBusinessId && (
-          <p className="owner-helper-text">Hizmetleri yönetmek için yukarıdan bir işletme seçin.</p>
+          <p className="owner-helper-text owner-inline-status">Hizmetleri yönetmek için yukarıdan bir işletme seçin.</p>
         )}
 
         {hasOwnerBusinesses && selectedBusinessId && (
           <>
-            {servicesLoading && <p>Hizmet bilgileri yükleniyor...</p>}
+            {servicesLoading && <p className="owner-inline-status">Hizmet bilgileri yükleniyor...</p>}
 
             {servicesError && (
-              <p className="ui-error service-status-message">{servicesError}</p>
+              <p className="ui-error service-status-message owner-inline-status">{servicesError}</p>
             )}
             {servicesSuccess && (
-              <p className="ui-success service-status-message">{servicesSuccess}</p>
+              <p className="ui-success service-status-message owner-inline-status">{servicesSuccess}</p>
             )}
 
             {!servicesLoading && (
@@ -1224,7 +1216,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
                 </form>
 
                 {businessServices.length === 0 && (
-                  <p className="owner-helper-text">
+                  <p className="owner-helper-text owner-inline-status">
                     Bu işletmeye henüz hizmet eklenmemiş.
                   </p>
                 )}
@@ -1251,7 +1243,7 @@ function OwnerWorkOrdersPanel({ onBack }) {
                             ihtiyacına göre gerçek ücret artabilir.
                           </p>
 
-                          <div className="service-price-actions">
+                          <div className="service-price-actions owner-action-row">
                             <input
                               type="number"
                               min="0.01"
