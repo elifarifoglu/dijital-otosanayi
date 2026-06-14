@@ -109,7 +109,10 @@ function LoginPanel({ onLoginSuccess }) {
   return (
     <section className="login-page">
       <div className="login-card">
-        <h1>Dijital Otosanayi</h1>
+        <div className="login-brand-block">
+          <h1 className="login-brand-title">Dijital Otosanayi</h1>
+          <p className="login-brand-tagline">Dijital Servis Takip Platformu</p>
+        </div>
         <p className="login-subtitle">Demo ortamı için giriş yapın.</p>
 
         <form className="login-form" onSubmit={handleSubmit}>

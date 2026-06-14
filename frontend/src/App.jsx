@@ -30,7 +30,10 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="app-brand">Dijital Otosanayi</div>
+        <div className="app-brand" aria-label="Dijital Otosanayi marka alanı">
+          <span className="app-brand-title">Dijital Otosanayi</span>
+          <span className="app-brand-tagline">Dijital Servis Takip Platformu</span>
+        </div>
         <nav className="app-nav">
           <button
             type="button"
