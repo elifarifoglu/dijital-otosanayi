@@ -1,74 +1,170 @@
-﻿# Dijitalleştirilmiş Otosanayi
+﻿# Dijital Otosanayi
 
-## 1. Proje özeti
-Bu proje, otosanayi işletmeleri ve müşterileri için temel bir web uygulaması iskeletidir. Backend FastAPI ile çalışıyor, frontend React ve Vite ile oluşturuluyor. Şu anda backend’de sağlık kontrolleri ve temel CORS yapılandırması var; frontend ise basit bir React uygulaması.
+Otosanayi işletmeleri ve müşterileri için geliştirilmiş web tabanlı bir bitirme projesidir.
 
-## 2. Teknolojiler
-- Python, FastAPI
+Müşteriler; kayıtlı işletmeleri listeleyebilir, işletme detaylarını ve yorumlarını görüntüleyebilir, kendi iş emirlerinin süreç durumunu takip edebilir. İşletme sahipleri ise müşteri için iş emri oluşturabilir, durum güncelleyebilir ve işletmelerine ait hizmet ile minimum fiyatları yönetebilir.
+
+---
+
+## Kullanılan Teknolojiler
+
+- **Backend:** Python, FastAPI, SQLAlchemy, Alembic
+- **Veritabanı:** PostgreSQL
+- **Frontend:** React, Vite
+- **Kimlik Doğrulama:** JWT
+
+---
+
+## Proje Yapısı
+
+```
+backend/                   FastAPI uygulaması
+frontend/                  React arayüzü
+backend/migrations/        Alembic migration dosyaları
+backend/seed_demo_data.py  Demo verisi oluşturma scripti
+```
+
+---
+
+## Temel Özellikler
+
+- Kullanıcı kayıt ve giriş işlemleri
+- Rol tabanlı yetkilendirme (müşteri / işletme sahibi)
+- İşletme listeleme ve detay görüntüleme
+- Yorum ve puan sistemi ile ortalama puan gösterimi
+- İş emri oluşturma ve durum güncelleme
+- Müşterinin kendi iş emirlerini takip etmesi
+- İşletme hizmet kataloğu ve minimum fiyat yönetimi
+
+---
+
+## Kurulum
+
+### Gereksinimler
+
+- Python 3.11 veya 3.12
 - PostgreSQL
-- React, Vite
-- JavaScript
+- Node.js ve npm
 
-## 3. Klasör yapısı
-- `backend/` — FastAPI sunucusu
-- `frontend/` — React uygulaması
-- `docs/` — proje belgeleri
-
-## 4. Gereksinimler
-1. Python 3.11 veya 3.12
-2. PostgreSQL
-3. Node.js ve npm
-4. `pip` ve `npm` komut satırı araçları
-
-## 5. Backend kurulumu
-1. `cd backend`
-2. `python -m venv .venv`
-3. PowerShell için: `.\.venv\Scripts\Activate.ps1`
-4. `pip install -r requirements.txt`
-5. `.env.example` dosyasını kopyala:
-   - `copy .env.example .env`
-6. `.env` içindeki `DATABASE_URL` değerini PostgreSQL bağlantına göre ayarla
-7. PostgreSQL sunucusunun çalışıyor olduğundan emin ol
-8. Gerekirse `CORS_ORIGINS` değerini güncelle
-
-## 6. Frontend kurulumu
-1. `cd frontend`
-2. `npm install`
-3. `.env.example` dosyasını kopyala:
-   - `copy .env.example .env`
-4. Gerekirse `VITE_API_BASE_URL` değerini `http://127.0.0.1:8000` olarak bırak
-
-## 7. Environment değişkenleri
-- Backend:
-  - `DATABASE_URL`
-  - `CORS_ORIGINS`
-- Frontend:
-  - `VITE_API_BASE_URL`
-  - `VITE_APP_NAME`
-
-Her iki klasörde de `.env.example` dosyası mevcut. Bunlardan `.env` dosyası oluşturup kendi ortamına göre düzenle.
-
-## 8. Uygulamayı çalıştırma
 ### Backend
-- `cd backend`
-- `.\.venv\Scripts\Activate.ps1`
-- `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
+
+```bash
+python -m venv .venv
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+cd backend
+pip install -r requirements.txt
+```
 
 ### Frontend
-- `cd frontend`
-- `npm run dev`
+
+```bash
+cd frontend
+npm install
+```
+
+---
+
+## Environment Değişkenleri
+
+`backend/.env` dosyası oluşturup aşağıdaki değerleri kendi ortamına göre ayarla:
+
+```
+DATABASE_URL=postgresql://postgres:password@localhost:5432/dijital_otosanayi
+SECRET_KEY=your-secret-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
+
+`frontend/.env` dosyası (gerekirse):
+
+```
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+---
+
+## Veritabanı Migration
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+---
+
+## Demo Verisi Oluşturma
+
+```bash
+cd backend
+python seed_demo_data.py
+```
+
+---
+
+## Uygulamayı Çalıştırma
+
+### Backend
+
+```bash
+cd backend
+uvicorn app.main:app --reload
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run dev
+```
 
 Frontend `http://localhost:5173` adresinde açılır.
 
-## 9. Doğrulama adımları
-1. Backend çalıştıktan sonra:
-   - `http://127.0.0.1:8000/`
-   - `http://127.0.0.1:8000/health`
-2. Frontend çalıştıktan sonra:
-   - `http://localhost:5173`
-3. Backend ve frontend ayrı terminalde çalıştırılmalı
+---
 
-## 10. Mevcut durum ve notlar
-- Proje şu anda başlangıç aşamasında: backend temel sağlık kontrollerini sunuyor, frontend temel React iskeletine sahip.
-- Tam kullanıcı, iş emri veya auth özellikleri henüz eklenmedi.
-- README sadece mevcut çalışan kurulum adımlarını içerir.
+## Demo Hesapları
+
+Aşağıdaki hesaplar `seed_demo_data.py` scripti çalıştırıldığında oluşturulan örnek hesaplardır:
+
+| Rol | E-posta | Şifre |
+|---|---|---|
+| Müşteri | demo.customer@example.com | Demo12345 |
+| İşletme Sahibi | demo.owner@example.com | Demo12345 |
+| Yönetici | demo.admin@example.com | Demo12345 |
+
+---
+
+## Temel API Endpointleri
+
+| Yöntem | Endpoint | Açıklama |
+|---|---|---|
+| POST | /auth/register | Kullanıcı kaydı |
+| POST | /auth/login | Giriş ve token alma |
+| GET | /businesses | İşletme listesi |
+| GET | /businesses/{id} | İşletme detayı |
+| POST | /businesses/{id}/reviews | Yorum ekleme |
+| GET | /my/work-orders | Müşterinin iş emirleri |
+| POST | /work-orders | İş emri oluşturma |
+| PATCH | /work-orders/{id}/status | İş emri durumu güncelleme |
+
+---
+
+## Demo Akışı
+
+**Müşteri olarak:**
+1. Müşteri hesabıyla giriş yap.
+2. İşletmeler ekranından işletmeleri listele.
+3. İşletme detayı ve mevcut yorumları görüntüle.
+4. İş Emirlerim ekranından kendi iş emirlerinin durumunu takip et.
+
+**İşletme sahibi olarak:**
+1. İşletme sahibi hesabıyla giriş yap.
+2. Müşteri ve araç seçerek yeni iş emri oluştur.
+3. Mevcut iş emirlerinin durumunu güncelle.
+4. İşletmeye ait hizmetleri ve minimum fiyatları yönet.
+
+---
+
+## Notlar
+
+Proje yerel geliştirme ortamında çalıştırılacak şekilde hazırlanmıştır. Deployment yapılandırması, gelişmiş arama ve filtreleme, bildirim sistemi gibi özellikler ilerleyen aşamalarda geliştirilebilir.
